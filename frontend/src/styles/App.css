@@ -1,0 +1,170 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: black;
+    color: white;
+    height: 100%;
+}
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(20, 20, 20, 0.9);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+}
+.video-container {
+    position: fixed; 
+    width: 100vw;
+    height: 90vh;
+    overflow: hidden;
+    z-index: -2; 
+}
+
+.video-container video {
+    position: absolute;
+    top: 59%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6); 
+    z-index: -1; 
+}
+
+.logo img {
+    height: 50px;
+    margin-left: 30px;
+    cursor: pointer;
+    display: block;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    padding-right: 100px;
+}
+
+nav ul li {
+    margin: 0 50px;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: white;
+    font-size: 18px;
+    transition: color 0.3s ease-in-out;
+}
+
+nav ul li a:hover {
+    color: #3498db;
+}
+.hero {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    width: 100%;
+    padding-top: 80px; /* Space for fixed navbar */
+    padding-bottom: 80px; /* Space for fixed footer */
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px 24px;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background 0.3s ease-in-out;
+}
+
+.student {
+    background: #3498db;
+    color: white;
+}
+
+.student:hover {
+    background: #2980b9;
+}
+
+.expert {
+    background: #e74c3c;
+    color: white;
+}
+
+.expert:hover {
+    background: #c0392b;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+    background: rgba(20, 20, 20, 0.9);
+    font-size: 14px;
+    box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.1);
+}
+
+body {
+    font-family: Arial, sans-serif;
+  }
+  
+  h2 {
+    color: #333;
+  }
+  
+  button {
+    cursor: pointer;
+  }

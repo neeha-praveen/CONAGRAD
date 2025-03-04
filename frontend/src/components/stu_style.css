@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter',sans-serif; 
+}
+body{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    background: linear-gradient(90deg, #e2e2e2, #c9d6ff);
+}
+.container{
+    position: relative;
+    width: 900px;
+    height: 600px;
+    margin: 20px;
+    background: #fff;
+    border-radius: 30px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, .2);
+    overflow: hidden ;
+}  
+.form-container{
+    position: absolute;
+    right: 0;
+    width: 50%;
+    height: 100%;
+    background : #fff;
+    display: flex;
+    align-items: center;
+    color: #333;
+    text-align: center;
+    padding: 40px;
+    z-index: 1;
+    transition: .6s ease-in-out 1.2s, visibility 0s 1s;
+    
+}
+.container.active .form-container{
+    right: 50%;
+}
+.form-container.register-box{
+    visibility: hidden;
+    
+}
+.container.active .form-container.register-box{
+    visibility: visible;
+}
+
+form{
+    width: 100%;
+}
+
+.container h1{
+    font-size: 36px;
+    margin: -10px 0;
+}
+
+.input-box{
+    position: relative;
+    margin: 30px 0;
+}
+.input-box input{
+    width: 100%;
+    padding: 15px;
+    background: #eee;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #333;
+    font-weight: 500;
+}
+.input-box input::placeholder{
+    color: #888;
+    font-weight: 400;
+}
+.input-box i{
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    color: #888;
+}
+.forgot-password{
+    margin: -15px 0 15px;
+}
+.forgot-password a{
+    font-size: 14.5px;
+    color: #333;
+    text-decoration: none;
+}
+
+.btn{
+    width: 100%;
+    height: 48px;
+    background: #0d0d55;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.container p{
+    font-size: 15px;
+    margin: 15px 0 ;
+}
+.social-icons{
+    display: flex;
+    justify-content: center;
+}
+.social-icons a{
+    display: inline-flex;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    font-size: 25px;
+    color: #333;
+    text-decoration: none;
+    margin: 0 8px;
+}
+
+.toggle-box-stu{
+    position: inherit;
+    width: 100%;
+    height: 100% ;
+}
+.toggle-box-stu::before{
+    content: '';
+    position: absolute;
+    left: -250%;
+    width: 300%;
+    height: 100%;
+    background: #fa879f;
+    border-radius: 150px  ;
+    z-index: 2;
+    transition: 1.8s ease-in-out;
+}
+
+.container.active .toggle-box-stu::before{
+    left: 50%;
+}
+.toggle-panel-stu{
+    position: absolute;
+    width: 50%;
+    height: 100% ;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2;
+    transition: .6s ease-in-out;
+}
+.toggle-panel-stu.toggle-right{
+    right: -50%;
+    transition-delay: .6s;
+}
+.toggle-panel-stu.toggle-left{
+    left: 0;
+    transition-delay: 1.2s;
+}
+.container.active .toggle-panel-stu.toggle-left{
+    left: -50%;
+    transition-delay: .6s;
+}
+.container.active .toggle-panel-stu.toggle-right{
+    right: 0;
+    transition-delay: 1.2s;
+}
+.toggle-panel-stu p{ 
+    margin-bottom: 20px;
+}
+.toggle-panel-stu .btn{
+    width: 160px;
+    height: 46px;
+    background: transparent;
+    border: 2px solid #fff;
+    box-shadow: none; 
+}
+@media screen and (max-width: 650px){
+    .container {
+        height: calc(100vh - 40px);
+    }
+
+    .form-container {
+        bottom: 0;
+        width: 100%;
+        height: 70%;
+    }
+
+    .container.active .form-container {
+        right: 0;
+        bottom: 30%;
+    }
+
+    .toggle-box-stu::before {
+        left:0;
+        top:-270%;
+        width: 100%;
+        height: 300%;
+        border-radius: 20vw;
+    }
+
+    .container.active .toggle-box-stu::before {
+        top: 70%;
+        left: 0;
+    }
+
+    .toggle-panel {
+        width: 100%;
+        height:30%;
+    }
+
+    .toggle-panel-stu.toggle-left {
+        top: 0;
+    }
+
+    .container.active .toggle-panel-stu.toggle-left {
+        left:0;
+        top: -30%;
+    }
+
+    .toggle-panel-stu.toggle-right {
+        right:0;
+        bottom: -30%;
+    }
+
+    .container.active .toggle-panel-stu.toggle-right {
+        bottom: 0;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .form-container {
+        padding: 20px;
+    }
+
+    .toggle-panel-stu h1 {
+        font-size: 30px;
+    }
+}
+
+
+ 
