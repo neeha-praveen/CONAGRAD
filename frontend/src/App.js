@@ -1,13 +1,13 @@
-import { BrowserRouter as Router, Routes, Route,Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import StudentAuth from "./components/studentAuth";
 import ExpertAuth from "./components/expertAuth";
 import StudentUpload from "./components/StudentUpload";
-import "./components/StudentUpload.css";
-import PendingAssignments from "./components/pendingAssignment";
-import Navbar from "./components/Navbar";
-import AssignedAssignments from "./components/AssignedAssignment";
-import History from "./components/history";
 import "./styles/App.css";
+
+// import PendingAssignments from "./components/pendingAssignment";
+// import Navbar from "./components/Navbar";
+// import AssignedAssignments from "./components/AssignedAssignment";
+// import History from "./components/history";
 
 function Home() {
   return (
@@ -60,13 +60,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/student-login" element={<StudentAuth />} />
         <Route path="/expert-login" element={<ExpertAuth />} />
+        <Route path="/expert-register" element={<ExpertAuth />} />
         <Route path="/student-upload" element={<StudentUpload />} />
-        <Route path="/history" element={<History />} />
+        {/*<Route path="/history" element={<History />} />
         <Route path="/pending" element={<PendingAssignments />} />
         <Route path="/assigned" element={<AssignedAssignments />} />
-
-</Routes>
-
+        */}
+      </Routes>
     </Router>
   );
 }
