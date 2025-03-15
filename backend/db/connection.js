@@ -1,2 +1,2 @@
 const mongoose = require('mongoose');
-mongoose.connect('mongodb://127.0.0.1/conagrad')
+mongoose.connect('mongodb+srv://conagrad:connect1202%40@cluster0.tpmff.mongodb.net/')

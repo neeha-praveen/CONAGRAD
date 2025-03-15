@@ -1,7 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import StudentAuth from "./components/studentAuth";
 import ExpertAuth from "./components/expertAuth";
+import ExpertDashboard from "./components/ExpertDashboard";
 import StudentUpload from "./components/StudentUpload";
+import YourWork from "./components/YourWork";
+import ExpertProfile from "./components/ExpertProfile";
 import "./styles/App.css";
 
 // import PendingAssignments from "./components/pendingAssignment";
@@ -60,8 +63,10 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/student-login" element={<StudentAuth />} />
         <Route path="/expert-login" element={<ExpertAuth />} />
-        <Route path="/expert-register" element={<ExpertAuth />} />
+        <Route path="/expert-dashboard" element={<ExpertDashboard />} />
         <Route path="/student-upload" element={<StudentUpload />} />
+        <Route path="/your-work" element={<YourWork />} />
+        <Route path="/profile" element={<ExpertProfile />} />
         {/*<Route path="/history" element={<History />} />
         <Route path="/pending" element={<PendingAssignments />} />
         <Route path="/assigned" element={<AssignedAssignments />} />

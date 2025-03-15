@@ -20,12 +20,17 @@ export default function StudentAuth() {
     setMessage("");
 
     try {
-      const response = await axios.post("http://localhost:4000/login", loginData);
+      const response = await axios.post("http://localhost:4000/login", loginData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       setMessage(response.data.message);
+      localStorage.setItem('token', response.data.token); // If using JWT
       setTimeout(() => navigate("/StudentUpload"), 2000); // Redirect after 2 sec
       setLoginData({ username: "", password: "" }); // Clear form
     } catch (error) {
-      setError(error.response?.data?.error || "Login failed. Please check your credentials.");
+      setError(error.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }

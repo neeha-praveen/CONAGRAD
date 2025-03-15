@@ -4,92 +4,55 @@ import axios from "axios";
 import "./StudentUpload.css";
 
 const StudentUpload = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState("");
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    dueDate: '',
+    file: null
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  // For pending uploads
-  const [pending, setPending] = useState([]);
-  const [loadingPending, setLoadingPending] = useState(true);
-  const [errorPending, setErrorPending] = useState("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-  // Fetch initial upload history
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const response = await axios.get("http://localhost:4000/history");
-        setHistory(response.data);
-      } catch (err) {
-        console.error("History fetch error:", err);
-        setError("Failed to load upload history");
-        // Uncomment below to use dummy data if API is unavailable:
-        /*
-        setHistory([
-          { name: "Assignment1.pdf", status: "Completed", date: "01/10/2025" },
-          { name: "Project.zip", status: "Pending", date: "01/12/2025" },
-        ]);
-        */
-      }
-      setLoading(false);
-    };
-    fetchHistory();
-  }, []);
+    const data = new FormData();
+    data.append('title', formData.title);
+    data.append('description', formData.description);
+    data.append('subject', formData.subject);
+    data.append('dueDate', formData.dueDate);
+    data.append('file', formData.file);
+    // For testing purposes - replace with actual student ID from auth
+    data.append('studentId', '123456789');
 
-  // Fetch pending uploads
-  useEffect(() => {
-    const fetchPending = async () => {
-      try {
-        const response = await axios.get("http://localhost:4000/pending");
-        setPending(response.data);
-      } catch (err) {
-        console.error("Pending fetch error:", err);
-        setErrorPending("Failed to load pending uploads");
-        // Uncomment below to use dummy data if API is unavailable:
-        /*
-        setPending([
-          { name: "Draft1.pdf", status: "Pending", date: "01/15/2025" },
-          { name: "Draft2.pdf", status: "Pending", date: "01/16/2025" },
-        ]);
-        */
-      }
-      setLoadingPending(false);
-    };
-    fetchPending();
-  }, []);
-
-  const handleFileChange = (e) => {
-    setSelectedFile(e.target.files[0]);
-    setUploadStatus("");
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setUploadStatus("No file selected. Please choose a file.");
-      return;
-    }
-
-    // Simulated API upload:
     try {
-      // Simulate an API upload delay (simulated success)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("Simulated upload success");
-
-      // Create a new history record with the current date.
-      const currentDate = new Date().toLocaleDateString();
-      const newRecord = {
-        name: selectedFile.name,
-        status: "Completed",
-        date: currentDate,
-      };
-      // Update history: add the new record at the beginning.
-      setHistory((prevHistory) => [newRecord, ...prevHistory]);
-      setUploadStatus("Uploaded successfully!");
-      setSelectedFile(null);
-    } catch (uploadError) {
-      console.error("Upload error:", uploadError);
-      setUploadStatus("Uploaded unsuccessfully - try again.");
+      const response = await axios.post('http://localhost:4000/upload-assignment', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setSuccess('Assignment uploaded successfully!');
+      // Clear form
+      setFormData({
+        title: '',
+        description: '',
+        subject: '',
+        dueDate: '',
+        file: null
+      });
+      // Reset file input
+      document.getElementById('file-input').value = '';
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err.response?.data?.error || 'Failed to upload assignment');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -126,60 +89,58 @@ const StudentUpload = () => {
       </nav>
 
       <div className="upload-container">
-        <h2>Upload Assignment / Project</h2>
-        <input type="file" onChange={handleFileChange} />
-        {selectedFile && (
-          <div className="file-preview">
-            <p>
-              <strong>Selected file:</strong> {selectedFile.name}
-            </p>
+        <h2>Upload Assignment</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              required
+            />
           </div>
-        )}
-        <button onClick={handleUpload}>Upload</button>
-        {uploadStatus && (
-          <div
-            className={`upload-message ${
-              uploadStatus.includes("successfully") ? "success" : "error"
-            }`}
-          >
-            {uploadStatus}
+          <div className="form-group">
+            <label>Subject</label>
+            <input
+              type="text"
+              value={formData.subject}
+              onChange={(e) => setFormData({...formData, subject: e.target.value})}
+              required
+            />
           </div>
-        )}
-      </div>
-
-      {/* Pending Uploads */}
-      <div className="pending-container">
-        <h2>Your Pending Uploads</h2>
-        {loadingPending ? (
-          <p>Loading...</p>
-        ) : errorPending ? (
-          <p className="error">{errorPending}</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pending.length === 0 ? (
-                <tr>
-                  <td colSpan="3">No pending uploads found.</td>
-                </tr>
-              ) : (
-                pending.map((item, index) => (
-                  <tr key={index}>
-                    <td>{item.name}</td>
-                    <td>{item.status}</td>
-                    <td>{item.date}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Due Date</label>
+            <input
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Assignment File</label>
+            <input
+              id="file-input"
+              type="file"
+              onChange={(e) => setFormData({...formData, file: e.target.files[0]})}
+              required
+            />
+          </div>
+          {error && <div className="error-message">{error}</div>}
+          {success && <div className="success-message">{success}</div>}
+          <button type="submit" disabled={loading}>
+            {loading ? 'Uploading...' : 'Upload Assignment'}
+          </button>
+        </form>
       </div>
     </div>
   );

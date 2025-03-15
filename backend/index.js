@@ -1,128 +1,455 @@
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
-const Expert = require("./Models/Expert");
+const multer = require('multer');
+const path = require('path');
+const errorHandler = require("./middleware/errorHandler");
+const jwt = require('jsonwebtoken');
+const authMiddleware = require("./middleware/auth");
+require('dotenv').config();
 
 const app = express();
 const PORT = 4000;
 
-app.use(express.json()); // Enable JSON body parsing
-app.use(cors({
-    origin: 'http://localhost:3000',
-    credentials: true
-})); // Enable CORS
+// MongoDB Atlas Connection
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => {
+    console.log('Connected to MongoDB Atlas');
+    console.log('Database:', mongoose.connection.db.databaseName);
+    mongoose.connection.db.listCollections().toArray().then(collections => {
+        console.log('Available collections:', collections.map(c => c.name));
+    });
+})
+.catch((err) => console.error('MongoDB connection error:', err));
 
-// Connect to MongoDB
-mongoose.connect("mongodb://127.0.0.1:27017/conagrad", {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Debug middleware to log all requests
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
 });
 
-// Define a User Schema
-const UserSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  username: String,
-  password: String,
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
 });
 
-const User = mongoose.model("students", UserSchema);
+const upload = multer({ storage: storage });
 
-// REGISTER ROUTE
+// Serve uploaded files
+app.use('/uploads', express.static('uploads'));
+
+// Import Models
+const Assignment = require('./Models/Assignment');
+const Student = require('./Models/Student');
+const Expert = require('./Models/Expert');
+
+// Routes
 app.post("/register", async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
-
-    if (!name || !email || !username || !password) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      return res.status(400).json({ error: "Username already exists" });
-    }
-
-    const newUser = new User({ name, email, username, password });
-    await newUser.save();
-
+        const newStudent = new Student({ name, email, username, password });
+        await newStudent.save();
     res.status(201).json({ 
-      message: "Registration successful! Redirecting to login...",
+            message: "Registration successful!",
       redirectTo: "/login"
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+        res.status(500).json({ error: "Registration failed" });
   }
 });
 
-// LOGIN ROUTE
 app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: "Username and Password are required" });
+    try {
+        const { username, password } = req.body;
+        const student = await Student.findOne({ username, password });
+        if (!student) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        
+        const token = jwt.sign(
+            { userId: student._id, userType: 'student' },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        
+        res.status(200).json({ 
+            message: "Login successful!",
+            token,
+            user: {
+                id: student._id,
+                username: student.username,
+                name: student.name
+            },
+            redirectTo: "/student-upload"
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Login failed" });
     }
-
-    const user = await User.findOne({ username, password });
-    if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    res.status(200).json({ message: "Login successful! Redirecting to dashboard...", redirectTo: "/dashboard" });
-  } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
-  }
 });
 
-// Add these expert routes alongside your existing routes
+// Expert routes
 app.post("/expert/register", async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
-
-    if (!name || !email || !username || !password) {
-      return res.status(400).json({ error: "All fields are required" });
-    }
-
-    const existingExpert = await Expert.findOne({ username });
-    if (existingExpert) {
-      return res.status(400).json({ error: "Username already exists" });
-    }
-
     const newExpert = new Expert({ name, email, username, password });
     await newExpert.save();
-
     res.status(201).json({ 
-      message: "Registration successful! Redirecting to login...",
+            message: "Registration successful!",
       redirectTo: "/expert-login"
     });
   } catch (error) {
-    res.status(500).json({ error: "Registration failed. Please try again." });
+        res.status(500).json({ error: "Registration failed" });
   }
 });
 
 app.post("/expert/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: "Username and Password are required" });
+    try {
+        const { username, password } = req.body;
+        const expert = await Expert.findOne({ username, password });
+        if (!expert) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        
+        const token = jwt.sign(
+            { userId: expert._id, userType: 'expert' },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        
+        res.status(200).json({ 
+            message: "Login successful!",
+            token,
+            user: {
+                id: expert._id,
+                username: expert.username,
+                name: expert.name
+            },
+            redirectTo: "/expert-dashboard"
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Login failed" });
     }
-
-    const expert = await Expert.findOne({ username, password });
-    if (!expert) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-
-    res.status(200).json({ 
-      message: "Login successful! Redirecting to dashboard...",
-      redirectTo: "/expert-dashboard"
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Login failed. Please try again." });
-  }
 });
 
-// START SERVER
+// Student Upload Assignment Route
+app.post("/upload-assignment", authMiddleware, upload.single('file'), async (req, res) => {
+    try {
+        const { title, description, subject, dueDate } = req.body;
+        const studentId = req.userId; // Now coming from auth middleware
+
+        const newAssignment = new Assignment({
+            title,
+            description,
+            subject,
+            studentId,
+            fileUrl: `/uploads/${req.file.filename}`,
+            fileName: req.file.originalname,
+            dueDate,
+            status: 'pending'
+        });
+
+        await newAssignment.save();
+        await newAssignment.populate('studentId', 'name username');
+        
+        res.status(201).json({ 
+            message: "Assignment uploaded successfully",
+            assignment: newAssignment
+        });
+    } catch (error) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: "Failed to upload assignment" });
+    }
+});
+
+// Route for fetching available assignments
+app.get('/available-assignments', authMiddleware, async (req, res) => {
+    try {
+        const assignments = await Assignment
+            .find({ status: 'pending' })
+            .populate('studentId', 'name username')
+            .sort({ createdAt: -1 });
+            
+        res.json(assignments);
+    } catch (error) {
+        console.error('Error fetching assignments:', error);
+        res.status(500).json({ error: 'Failed to fetch assignments' });
+    }
+});
+
+// Get Current Work Route
+app.get("/current-work", async (req, res) => {
+    try {
+        const currentWork = await Assignment.find({
+            status: 'assigned'
+        }).lean();
+        res.json(currentWork);
+    } catch (error) {
+        console.error('Error fetching current work:', error);
+        res.status(500).json({ error: "Failed to fetch current work" });
+    }
+});
+
+// Route for checking current assignment
+app.get('/expert/current-assignment', authMiddleware, async (req, res) => {
+    try {
+        const currentAssignment = await Assignment
+            .findOne({ 
+                expertId: req.userId,
+                status: 'assigned'
+            })
+            .populate('studentId', 'name username')
+            .populate('expertId', 'name username');
+            
+        res.json(currentAssignment);
+    } catch (error) {
+        console.error('Error checking current assignment:', error);
+        res.status(500).json({ error: 'Failed to check current assignment' });
+    }
+});
+
+// Accept assignment route
+app.post("/accept-assignment/:id", authMiddleware, async (req, res) => {
+    try {
+        // Check if expert already has an assignment
+        const existingAssignment = await Assignment.findOne({
+            status: 'assigned',
+            expertId: req.userId
+        });
+
+        if (existingAssignment) {
+            return res.status(400).json({ 
+                error: "You already have an active assignment. Please complete it first." 
+            });
+        }
+
+        const assignment = await Assignment.findByIdAndUpdate(
+            req.params.id,
+            { 
+                $set: { 
+                    status: 'assigned',
+                    expertId: req.userId
+                }
+            },
+            { new: true }
+        ).populate('studentId', 'name username')
+         .populate('expertId', 'name username');
+
+        if (!assignment) {
+            return res.status(404).json({ error: "Assignment not found" });
+        }
+
+        res.json({ 
+            message: "Assignment accepted successfully",
+            assignment 
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to accept assignment" });
+    }
+});
+
+// Complete assignment route
+app.post("/complete-assignment/:id", async (req, res) => {
+    try {
+        const assignment = await Assignment.findByIdAndUpdate(
+            req.params.id,
+            { 
+                $set: { 
+                    status: 'completed'
+                }
+            },
+            { new: true }
+        );
+
+        if (!assignment) {
+            return res.status(404).json({ error: "Assignment not found" });
+        }
+
+        res.json({ 
+            message: "Assignment completed successfully",
+            assignment 
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to complete assignment" });
+    }
+});
+
+// List all collections (for debugging)
+app.get("/debug/collections", async (req, res) => {
+    try {
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        res.json(collections.map(col => col.name));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug route to check database connection
+app.get('/debug/database', async (req, res) => {
+    try {
+        // Check connection status
+        const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+        
+        // Get all collections
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        
+        // Count documents in assignments collection
+        const assignmentCount = await Assignment.countDocuments();
+        
+        // Get a sample assignment
+        const sampleAssignment = await Assignment.findOne();
+        
+        res.json({
+            status: dbStatus,
+            collections: collections.map(c => c.name),
+            assignmentCount,
+            sampleAssignment
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+            stack: error.stack
+        });
+    }
+});
+
+// Add error handling middleware
+app.use(errorHandler);
+
+// Function to add test data
+const addTestData = async () => {
+    try {
+        const count = await Assignment.countDocuments();
+        if (count === 0) {
+            const testAssignment = new Assignment({
+                title: "Test Assignment",
+                description: "This is a test assignment",
+                subject: "Computer Science",
+                studentName: "John Doe",
+                dueDate: new Date("2025-03-20"),
+                status: "pending"
+            });
+            await testAssignment.save();
+            console.log('Test data added successfully');
+        }
+    } catch (error) {
+        console.error('Error adding test data:', error);
+    }
+};
+
+// Add this route to get expert profile
+app.get("/expert/profile", async (req, res) => {
+    try {
+        // For now, getting username from token. You'll implement proper auth later
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: "No token provided" });
+        }
+
+        // Get expert data from database
+        const expert = await Expert.findById(req.expertId); // You'll get this from auth middleware
+        if (!expert) {
+            return res.status(404).json({ error: "Expert not found" });
+        }
+
+        // Return only necessary data
+        res.json({
+            username: expert.username,
+            name: expert.name,
+            email: expert.email
+        });
+    } catch (error) {
+        console.error('Error fetching profile:', error);
+        res.status(500).json({ error: "Failed to fetch profile" });
+    }
+});
+
+// Root route
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'Expert Assignment API Server',
+        endpoints: {
+            test: '/test',
+            assignments: '/available-assignments',
+            currentAssignment: '/expert/current-assignment'
+        }
+    });
+});
+
+// Test route
+app.get('/test', (req, res) => {
+    res.json({ message: 'Server is running' });
+});
+
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log('Available routes:');
+  console.log('- GET /');
+  console.log('- GET /test'); 
+  console.log('- GET /available-assignments');
+  console.log('- GET /expert/current-assignment');
+});
+
+// Error handling
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+// Get expert stats
+app.get("/expert/stats", authMiddleware, async (req, res) => {
+    try {
+        const completedAssignments = await Assignment.countDocuments({
+            expertId: req.userId,
+            status: 'completed'
+        });
+
+        const activeAssignments = await Assignment.countDocuments({
+            expertId: req.userId,
+            status: 'assigned'
+        });
+
+        // You'll need to implement your own rating system
+        const rating = 4.5; // Placeholder
+
+        res.json({
+            completedAssignments,
+            activeAssignments,
+            rating
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch expert stats" });
+    }
+});
+
+// Update expert profile
+app.put("/expert/profile/update", authMiddleware, async (req, res) => {
+    try {
+        const { name, email, username } = req.body;
+        const expert = await Expert.findByIdAndUpdate(
+            req.userId,
+            { name, email, username },
+            { new: true }
+        );
+        
+        res.json({
+            name: expert.name,
+            email: expert.email,
+            username: expert.username
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to update profile" });
+    }
 });

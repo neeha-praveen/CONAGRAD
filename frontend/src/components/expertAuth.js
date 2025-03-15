@@ -22,11 +22,12 @@ export default function ExpertAuth() {
 
     try {
       const response = await axios.post("http://localhost:4000/expert/login", loginData);
-      setMessage(response.data.message);
-      setTimeout(() => navigate("/ExpertDashboard"), 2000); // Redirect after 2 sec
-      setLoginData({ username: "", password: "" }); // Clear form
+      console.log('Login successful:', loginData.username); // Debug log
+      localStorage.setItem('expertUsername', loginData.username);
+      console.log('Stored username:', localStorage.getItem('expertUsername')); // Debug log
+      navigate("/expert-dashboard");
     } catch (error) {
-      setError(error.response?.data?.error || "Login failed. Please check your credentials.");
+      setError(error.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }
