@@ -21,9 +21,14 @@ export default function StudentAuth() {
 
     try {
       const response = await axios.post("http://localhost:4000/login", loginData);
-      setMessage(response.data.message);
-      setTimeout(() => navigate("/StudentUpload"), 2000); // Redirect after 2 sec
-      setLoginData({ username: "", password: "" }); // Clear form
+      
+      // Store user data in localStorage
+      localStorage.setItem('studentToken', response.data.token);
+      localStorage.setItem('studentData', JSON.stringify(response.data.user));
+      
+      setMessage("Login successful! Redirecting to dashboard...");
+      setTimeout(() => navigate("/dashboard"), 2000); // Changed route to /dashboard
+      setLoginData({ username: "", password: "" });
     } catch (error) {
       setError(error.response?.data?.error || "Login failed. Please check your credentials.");
     } finally {

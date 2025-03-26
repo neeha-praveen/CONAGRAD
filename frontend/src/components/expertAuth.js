@@ -1,85 +1,63 @@
-import React, { useState } from "react";
-import "./exp_style.css"; // Import the CSS
-import "boxicons/css/boxicons.min.css"; // Import Boxicons
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import "./exp_style.css"; 
+import "boxicons/css/boxicons.min.css"; 
 
 const ExpertAuth = () => {
-  const [isActive, setIsActive] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+
+  const toggleForm = () => {
+    setIsSignUp(!isSignUp);
+  };
 
   return (
-    <div className={`container ${isActive ? "active" : ""}`}>
-      {/* Login Form */}
-      <div className="form-box login">
-        <form>
-          <h1>Login</h1>
-          <div className="input-box">
-            <input type="text" placeholder="Username" required />
-            <i className="bx bx-user"></i>
-          </div>
-          <div className="input-box">
-            <input type="password" placeholder="Password" required />
-            <i className="bx bx-lock-alt"></i>
-          </div>
-          <div className="forgot-link">
-            <a href="#">Forgot password?</a>
-          </div>
-          <button type="submit" className="btn">
-            Login
-          </button>
-          <p>or login with social platforms</p>
-          <div className="social-icons">
-            <a href="#">
-              <i className="bx bxl-google"></i>
-            </a>
-          </div>
-        </form>
-      </div>
-
-      {/* Register Form */}
-      <div className="form-box register">
-        <form>
-          <h1>Registration</h1>
-          <div className="input-box">
-            <input type="text" placeholder="Username" required />
-            <i className="bx bx-user"></i>
-          </div>
-          <div className="input-box">
-            <input type="email" placeholder="Email" required />
-            <i className="bx bx-envelope"></i>
-          </div>
-          <div className="input-box">
-            <input type="password" placeholder="Password" required />
-            <i className="bx bx-lock-alt"></i>
-          </div>
-          <div className="input-box">
-            <input type="number" placeholder="Age" required />
-          </div>
-          <button type="submit" className="btn">
-            Register
-          </button>
-          <p>or register with social platforms</p>
-          <div className="social-icons">
-            <a href="#">
-              <i className="bx bxl-google"></i>
-            </a>
-          </div>
-        </form>
-      </div>
-
-      {/* Toggle Box */}
-      <div className="toggle-box">
-        <div className="toggle-panel toggle-left">
-          <h1>Hello, Welcome!</h1>
-          <p>Don't have an account?</p>
-          <button className="btn register-btn" onClick={() => setIsActive(true)}>
-            Register
-          </button>
+    <div className="expert-auth-container">
+      <div className={`form-container ${isSignUp ? 'active' : ''}`}>
+        <div className="form-box login">
+          <h2>Expert Login</h2>
+          <form>
+            <div className="input-box">
+              <input type="email" required />
+              <label>Email</label>
+            </div>
+            <div className="input-box">
+              <input type="password" required />
+              <label>Password</label>
+            </div>
+            <div className="remember-forgot">
+              <label><input type="checkbox" /> Remember me</label>
+              <Link to="/forgot-password">Forgot Password?</Link>
+            </div>
+            <button type="submit" className="btn">Login</button>
+            <div className="login-register">
+              <p>Don't have an account? <button type="button" onClick={toggleForm} className="register-link">Register</button></p>
+            </div>
+          </form>
         </div>
-        <div className="toggle-panel toggle-right">
-          <h1>Welcome Back!</h1>
-          <p>Already have an account?</p>
-          <button className="btn login-btn" onClick={() => setIsActive(false)}>
-            Login
-          </button>
+
+        <div className="form-box register">
+          <h2>Expert Registration</h2>
+          <form>
+            <div className="input-box">
+              <input type="text" required />
+              <label>Full Name</label>
+            </div>
+            <div className="input-box">
+              <input type="email" required />
+              <label>Email</label>
+            </div>
+            <div className="input-box">
+              <input type="password" required />
+              <label>Password</label>
+            </div>
+            <div className="remember-forgot">
+              <label><input type="checkbox" required /> I agree to the terms & conditions</label>
+            </div>
+            <button type="submit" className="btn">Register</button>
+            <div className="login-register">
+              <p>Already have an account? <button type="button" onClick={toggleForm} className="login-link">Login</button></p>
+            </div>
+          </form>
         </div>
       </div>
     </div>
