@@ -57,31 +57,39 @@ const ExpertDashboard = () => {
   const fetchAssignments = async () => {
     setLoading(true);
     try {
-        console.log('Attempting to fetch assignments...');
-        const response = await axios.get('http://localhost:4000/available-assignments');
-        console.log('Assignment response:', response.data);
-        setAssignments(response.data);
-        setError('');
+      console.log('Attempting to fetch assignments...');
+      const token = localStorage.getItem('expertToken');
+      if (!token) {
+        throw new Error('No authentication token found.');
+      }
+  
+      const response = await axios.get('http://localhost:4000/available-assignments', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      console.log('Assignment response:', response.data);
+      setAssignments(response.data);
+      setError('');
     } catch (error) {
-        console.error('Error fetching assignments:', error);
-        setError('Failed to fetch assignments');
-        setAssignments([]);
+      console.error('Error fetching assignments:', error);
+      setError('Failed to fetch assignments');
+      setAssignments([]);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   const checkCurrentAssignment = async () => {
     try {
-        const token = localStorage.getItem('expertToken');
-        if (!token) return;
+      const token = localStorage.getItem('expertToken');
+      if (!token) return;
 
-        const response = await axios.get('http://localhost:4000/expert/current-assignment', {
-            headers: { Authorization: token }
-        });
-        setCurrentAssignment(response.data);
+      const response = await axios.get('http://localhost:4000/expert/current-assignment', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCurrentAssignment(response.data);
     } catch (error) {
-        console.error('Error checking current assignment:', error);
+      console.error('Error checking current assignment:', error);
     }
   };
 
@@ -92,17 +100,31 @@ const ExpertDashboard = () => {
         return;
       }
 
-      const response = await axios.post(`http://localhost:4000/accept-assignment/${assignmentId}`);
+      const token = localStorage.getItem('expertToken');
+      const response = await axios.post(
+        `http://localhost:4000/accept-assignment/${assignmentId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       setCurrentAssignment(response.data.assignment);
-      fetchAssignments(); // Refresh available assignments
-    } catch (err) {
+      fetchAssignments();
+    } catch (err) { 
       setError('Failed to accept assignment');
     }
   };
 
   const handleSubmitAssignment = async () => {
     try {
-      await axios.post(`http://localhost:4000/complete-assignment/${currentAssignment._id}`);
+      const token = localStorage.getItem('expertToken');
+      await axios.post(
+        `http://localhost:4000/complete-assignment/${currentAssignment._id}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       setCurrentAssignment(null);
       fetchAssignments();
     } catch (err) {
