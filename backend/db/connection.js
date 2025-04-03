@@ -1,2 +1,17 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-mongoose.connect('mongodb+srv://conagrad:connect1202%40@cluster0.tpmff.mongodb.net/')
+
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Connected to MongoDB Atlas');
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
