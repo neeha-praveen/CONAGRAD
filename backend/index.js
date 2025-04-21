@@ -7,6 +7,7 @@ const errorHandler = require("./middleware/errorHandler");
 const jwt = require('jsonwebtoken');
 const authMiddleware = require("./middleware/auth");
 require('dotenv').config();
+const studentRoutes = require('./routes/student');
 
 const app = express();
 const PORT = 4000;
@@ -396,3 +397,4 @@ app.get('/test', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+app.use('/api/student', studentRoutes);
