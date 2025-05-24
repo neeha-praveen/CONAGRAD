@@ -119,7 +119,22 @@ const ExpertDashboard = () => {
     <div className="dashboard-container">
       <ExpertNavbar />
       <div className="dashboard-content">
-        <h2>Available Assignments</h2>
+        <div className="dashboard-header-row">
+          <h2>Available Assignments</h2>
+          <div className="filter-section">
+            <select 
+              value={subjectFilter} 
+              onChange={(e) => setSubjectFilter(e.target.value)}
+              className="subject-filter"
+            >
+              {getUniqueSubjects().map(subject => (
+                <option key={subject} value={subject}>
+                  {subject === 'all' ? 'All Subjects' : subject}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         {currentAssignment && (
           <div className="current-assignment-section">
             <div className="dashboard-header">
@@ -201,19 +216,6 @@ const ExpertDashboard = () => {
           </div>
         ) : (
           <>
-            <div className="filter-section">
-              <select 
-                value={subjectFilter} 
-                onChange={(e) => setSubjectFilter(e.target.value)}
-                className="subject-filter"
-              >
-                {getUniqueSubjects().map(subject => (
-                  <option key={subject} value={subject}>
-                    {subject === 'all' ? 'All Subjects' : subject}
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="assignments-grid">
               {assignments
                 .filter(assignment => 
