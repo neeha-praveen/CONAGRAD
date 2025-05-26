@@ -260,6 +260,74 @@ app.post("/accept-assignment/:id", authMiddleware, async (req, res) => {
     }
 });
 
+// NEW: Expert submits a bid for an assignment
+app.post('/submit-bid/:id', authMiddleware, async (req, res) => {
+    try {
+        console.log('Submit bid route hit:', req.params.id);
+        console.log('Request body:', req.body);
+        console.log('Expert ID:', req.userId);
+
+        const { amount, message } = req.body;
+        const assignmentId = req.params.id;
+        const expertId = req.userId;
+
+        // Validate input
+        if (!amount || !message) {
+            return res.status(400).json({
+                error: 'Amount and message are required'
+            });
+        }
+
+        // Check if assignment exists and is available
+        const assignment = await Assignment.findById(assignmentId);
+        if (!assignment) {
+            return res.status(404).json({
+                error: 'Assignment not found'
+            });
+        }
+
+        if (assignment.status !== 'pending') {
+            return res.status(400).json({
+                error: 'Assignment is no longer available for bidding'
+            });
+        }
+
+        // Add bid to assignment
+        const bid = {
+            expertId,
+            amount: parseFloat(amount),
+            message,
+            timestamp: new Date()
+        };
+
+        // Check if expert has already bid
+        const existingBidIndex = assignment.bids.findIndex(
+            b => b.expertId.toString() === expertId
+        );
+
+        if (existingBidIndex !== -1) {
+            // Update existing bid
+            assignment.bids[existingBidIndex] = bid;
+        } else {
+            // Add new bid
+            assignment.bids.push(bid);
+        }
+
+        await assignment.save();
+
+        res.json({
+            success: true,
+            message: 'Bid submitted successfully'
+        });
+    } catch (error) {
+        console.error('Error submitting bid:', error);
+        res.status(500).json({
+            error: 'Failed to submit bid',
+            details: error.message
+        });
+    }
+});
+
 // Complete assignment route
 app.post("/complete-assignment/:id", async (req, res) => {
     try {
