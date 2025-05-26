@@ -1,19 +1,21 @@
 const jwt = require('jsonwebtoken');
 
-const authMiddleware = async (req, res, next) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ error: "Authentication required" });
-        }
-        
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.userId = decoded.userId;
-        req.userType = decoded.userType; // 'student' or 'expert'
-        next();
-    } catch (error) {
-        res.status(401).json({ error: "Invalid token" });
-    }
+module.exports = function(req, res, next) {
+  // Get token from header
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  // Check if no token
+  if (!token) {
+    return res.status(401).json({ error: 'No token, authorization denied' });
+  }
+  
+  // Verify token
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.expert = decoded;
+    req.userId = decoded.userId;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Token is not valid' });
+  }
 };
-
-module.exports = authMiddleware; 

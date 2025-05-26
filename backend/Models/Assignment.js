@@ -1,26 +1,54 @@
 const mongoose = require('mongoose');
 
+const BidSchema = new mongoose.Schema({
+    expertId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'experts',
+        required: true
+    },
+    amount: {
+        type: Number,
+        required: true
+    },
+    message: {
+        type: String,
+        required: true
+    },
+    timestamp: {
+        type: Date,
+        default: Date.now
+    }
+});
+
 const AssignmentSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: String,
-  fileName: String,
-  fileUrl: String,
-  fileType: String,
-  fileSize: Number,
-  status: {
-    type: String,
-    enum: ['pending', 'completed', 'assigned'],
-    default: 'pending'
-  },
-  submittedDate: {
-    type: Date,
-    default: Date.now
-  },
-  studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'students',
-    required: true
-  }
+    title: { type: String, required: true },
+    description: String,
+    fileName: String,
+    fileUrl: String,
+    fileType: String,
+    fileSize: Number,
+    status: {
+        type: String,
+        enum: ['pending', 'completed', 'assigned'],
+        default: 'pending'
+    },
+    submittedDate: {
+        type: Date,
+        default: Date.now
+    },
+    expertId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'experts'
+    },
+    dueDate: Date,
+    subject: String,
+    studentName: String,
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'students',
+        required: true
+    },
+    bids: [BidSchema]
 });
 
 module.exports = mongoose.model('Assignment', AssignmentSchema);

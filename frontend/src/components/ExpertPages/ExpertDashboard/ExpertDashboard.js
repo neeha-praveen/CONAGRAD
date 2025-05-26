@@ -11,9 +11,13 @@ const ExpertDashboard = () => {
   const [subjectFilter, setSubjectFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bidError, setBidError] = useState(null);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('available');
   const [submissionFile, setSubmissionFile] = useState(null);
+  const [showBidForm, setShowBidForm] = useState(false);
+  const [bidAmount, setBidAmount] = useState('');
+  const [bidMessage, setBidMessage] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('expertToken');
@@ -115,6 +119,30 @@ const ExpertDashboard = () => {
     }
   };
 
+  const handleSubmitBid = async () => {
+    try {
+      const token = localStorage.getItem('expertToken');
+      setBidError(null); // Clear previous bid error
+      const response = await axios.post(
+        `http://localhost:4000/submit-bid/${viewedAssignment._id}`,
+        {
+          amount: bidAmount,
+          message: bidMessage
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        setShowBidForm(false);
+        setBidAmount('');
+        setBidMessage('');
+        setViewedAssignment(null);
+      }
+    } catch (err) {
+      setBidError('Failed to submit bid');
+    }
+  };
+
   return (
     <div className="dashboard-container">
       <ExpertNavbar />
@@ -135,7 +163,7 @@ const ExpertDashboard = () => {
             </select>
           </div>
         </div>
-        {currentAssignment && (
+        {/* {currentAssignment && (
           <div className="current-assignment-section">
             <div className="dashboard-header">
               <h2>Current Assignment</h2>
@@ -163,12 +191,18 @@ const ExpertDashboard = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
 {viewedAssignment && (
         <div className="assignment-modal">
           <div className="assignment-modal-content">
-          <button className="close-btn" onClick={() => setViewedAssignment(null)}>×</button>
+            <button className="close-btn" onClick={() => {
+              setViewedAssignment(null);
+              setShowBidForm(false);
+              setBidAmount('');
+              setBidMessage('');
+              setBidError(null);
+            }}>×</button>
             <h2>{viewedAssignment.title}</h2>
             <div className="assignment-details">
               <p><i className="bx bx-user"></i> Student: {viewedAssignment.studentName || 'Anonymous'}</p>
@@ -178,7 +212,7 @@ const ExpertDashboard = () => {
               {viewedAssignment.fileUrl && (
                 <div className="file-section">
                   <i className="bx bx-file"></i>
-                  <span>{viewedAssignment.fileName}</span>
+                  <span className="file-name-dark">{viewedAssignment.fileName}</span>
                   <button
                     className="download-btn"
                     onClick={() => window.open(`http://localhost:4000${viewedAssignment.fileUrl}`, '_blank')}
@@ -189,12 +223,60 @@ const ExpertDashboard = () => {
               )}
             </div>
             <div className="modal-actions">
-              <button 
-                className="accept-btn"
-                onClick={() => handleAcceptAssignment(viewedAssignment._id)}
-              >
-                Accept Assignment
-              </button>
+              {!showBidForm ? (
+                <button 
+                  className="bid-btn"
+                  onClick={() => setShowBidForm(true)}
+                >
+                  Place Bid
+                </button>
+              ) : (
+                <div className="bid-form">
+                  <div className="bid-input-group">
+                    <label>Bid Amount ($)</label>
+                    <input
+                      type="number"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      placeholder="Enter your bid amount"
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div className="bid-input-group">
+                    <label>Message to Student</label>
+                    <textarea
+                      value={bidMessage}
+                      onChange={(e) => setBidMessage(e.target.value)}
+                      placeholder="Enter a message for the student"
+                      rows="4"
+                    />
+                  </div>
+                  {bidError && (
+                    <div className="bid-error-message">{bidError}</div>
+                  )}
+                  <div className="bid-form-actions">
+                    <button 
+                      className="cancel-btn"
+                      onClick={() => {
+                        setShowBidForm(false);
+                        setBidAmount('');
+                        setBidMessage('');
+                        setBidError(null);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      className="submit-bid-btn"
+                      onClick={handleSubmitBid}
+                      disabled={!bidAmount || !bidMessage}
+                    >
+                      Send Bid
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

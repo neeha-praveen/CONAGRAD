@@ -19,9 +19,23 @@ const expertSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Password is required']
-    }
-}, {
-    timestamps: true
-});
+    },
+    bio: {
+        type: String
+      },
+      expertise: {
+        type: [String]
+      },
+      education: {
+        type: String
+      },
+      experience: {
+        type: String
+      },
+      date: {
+        type: Date,
+        default: Date.now
+      }
+    });
 
 module.exports = mongoose.model('experts', expertSchema); 
