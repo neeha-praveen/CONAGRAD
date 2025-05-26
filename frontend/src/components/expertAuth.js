@@ -23,8 +23,8 @@ export default function ExpertAuth() {
     try {
       const response = await axios.post("http://localhost:4000/expert/login", loginData);
       console.log('Login successful:', loginData.username); // Debug log
+      localStorage.setItem('expertToken', response.data.token);
       localStorage.setItem('expertUsername', loginData.username);
-      console.log('Stored username:', localStorage.getItem('expertUsername')); // Debug log
       navigate("/expert-dashboard");
     } catch (error) {
       setError(error.response?.data?.error || "Login failed");
