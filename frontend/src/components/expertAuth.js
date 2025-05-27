@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./exp_style.css"; // Import the CSS
+import "./ExpertAuth.css"; // Import the CSS
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "boxicons/css/boxicons.min.css"; // Import Boxicons
