@@ -50,7 +50,7 @@ const ExpertNavbar = () => {
             <div className="profile-dropdown">
               <ul className="dropdown-menu">
                 <li>
-                  <Link to="/profile" className="dropdown-item">
+                  <Link to="/expert-profile" className="dropdown-item">
                     <i className="bx bx-user"></i>
                     Profile
                   </Link>
