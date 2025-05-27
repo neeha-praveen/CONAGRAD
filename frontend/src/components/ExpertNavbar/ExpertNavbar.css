@@ -1,0 +1,143 @@
+.expert-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+  }
+  
+  .expert-navbar .navbar-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .expert-navbar .navbar-logo img {
+    height: 35px;
+    width: auto;
+    object-fit: contain;
+  }
+  
+  .expert-navbar .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .expert-navbar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    color: #333;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+  
+  .expert-navbar .nav-link:hover {
+    background: rgba(82, 113, 255, 0.1);
+    color: #5271FF;
+  }
+  
+  .expert-navbar .profile-container {
+    display:flex;
+    align-items: center;
+    margin: auto 0;
+    height:40px;
+    border-radius: 9px;
+  }
+  
+  .expert-navbar .profile-trigger {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: #2c2c2c;
+  }
+  
+  .expert-navbar .profile-image {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .expert-navbar .profile-name {
+    color: #ffffff;
+    font-size: 16px;
+    margin-left: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
+  
+  .expert-navbar .profile-dropdown {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    min-width: 200px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1001;
+  }
+  
+  .expert-navbar .dropdown-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .expert-navbar .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 12px 16px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+  }
+  
+  .expert-navbar .dropdown-item:hover {
+    background: rgba(221, 222, 226, 0.1);   
+    color: #5271FF;
+  }
+  
+  .expert-navbar .dropdown-divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    margin: 0.5rem 0;
+  }
+  
+  @media (max-width: 768px) {
+    .navbar {
+      padding: 0 1rem;
+    }
+  
+    .profile-name {
+      display: none;
+    }
+  
+    .nav-link span {
+      display: none;
+    }
+  }

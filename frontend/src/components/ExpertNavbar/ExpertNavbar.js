@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import './ExpertNavbar.css';
+
+const ExpertNavbar = () => {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
+  const username = localStorage.getItem('expertUsername') || 'Expert';
+
+  const handleLogout = () => {
+    localStorage.removeItem('expertToken');
+    localStorage.removeItem('expertUsername');
+    navigate('/expert-login');
+  };
+
+  return (
+    <nav className="expert-navbar">
+      <div className="navbar-left">
+        <Link to="/" className="navbar-logo">
+          <img src="/Conagrad.jpg" alt="Logo" />
+        </Link>
+      </div>
+
+      <div className="navbar-right">
+        <Link to="/expert-dashboard" className="nav-link">
+          <i className="bx bx-home"></i>
+          Home
+        </Link>
+
+        <Link to="/history" className="nav-link">
+          <i className="bx bx-history"></i>
+          History
+        </Link>
+
+        <Link to="/your-work" className="nav-link">
+          <i className="bx bx-briefcase"></i>
+          Your Work
+        </Link>
+
+        <div className="profile-container">
+          <div 
+            className="profile-trigger"
+            onClick={() => setShowDropdown(!showDropdown)}
+          >
+            <img src="/default-profile.jpg" alt="Profile" className="profile-image" />
+            <span className="profile-name">{username}</span>
+          </div>
+
+          {showDropdown && (
+            <div className="profile-dropdown">
+              <ul className="dropdown-menu">
+                <li>
+                  <Link to="/profile" className="dropdown-item">
+                    <i className="bx bx-user"></i>
+                    Profile
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/settings" className="dropdown-item">
+                    <i className="bx bx-cog"></i>
+                    Settings
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/help" className="dropdown-item">
+                    <i className="bx bx-help-circle"></i>
+                    Help
+                  </Link>
+                </li>
+                <li className="dropdown-divider"></li>
+                <li>
+                  <button onClick={handleLogout} className="dropdown-item">
+                    <i className="bx bx-log-out"></i>
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+export default ExpertNavbar;
