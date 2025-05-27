@@ -56,7 +56,7 @@ const ExpertNavbar = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/settings" className="dropdown-item">
+                  <Link to="/expert-settings" className="dropdown-item">
                     <i className="bx bx-cog"></i>
                     Settings
                   </Link>
