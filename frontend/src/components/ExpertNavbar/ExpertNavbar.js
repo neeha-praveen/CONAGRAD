@@ -37,7 +37,7 @@ const ExpertNavbar = () => {
           Your Work
         </Link>
 
-        <div className="profile-container">
+        <div className="expertprofile-container">
           <div 
             className="profile-trigger"
             onClick={() => setShowDropdown(!showDropdown)}
