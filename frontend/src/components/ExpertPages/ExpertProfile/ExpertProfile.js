@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ExpertNavbar from '../../ExpertNavbar/ExpertNavbar';
-import './ExpertProfile/ExpertProfile.css';
+import './ExpertProfile.css';
 
 const ExpertProfile = () => {
   const [profile, setProfile] = useState({
