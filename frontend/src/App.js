@@ -19,6 +19,7 @@ import ExpertAuth from "./components/expertAuth";
 import ExpertDashboard from "./components/ExpertPages/ExpertDashboard/ExpertDashboard";
 import ExpertProfile from "./components/ExpertPages/ExpertProfile/ExpertProfile";
 import ExpertSettings from "./components/ExpertPages/ExpertSettings/ExpertSettings";
+import ExpertHistory from "./components/ExpertPages/ExpertHistory/ExpertHistory";
 
 
 function Home() {
@@ -92,6 +93,7 @@ function App() {
         <Route path="/expert-dashboard" element={<ExpertDashboard />} />
         <Route path="/expert-profile" element={<ExpertProfile />} />
         <Route path="/expert-settings" element={<ExpertSettings />} />
+        <Route path="/expert-history" element={<ExpertHistory />} />
       </Routes>
     </Router>
   );

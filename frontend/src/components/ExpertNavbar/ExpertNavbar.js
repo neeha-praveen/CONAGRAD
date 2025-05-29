@@ -48,7 +48,7 @@ const ExpertNavbar = () => {
           Home
         </Link>
 
-        <Link to="/history" className="nav-link">
+        <Link to="/expert-history" className="nav-link">
           <i className="bx bx-history"></i>
           History
         </Link>
