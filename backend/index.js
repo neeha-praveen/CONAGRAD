@@ -49,7 +49,23 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Serve uploaded files
-app.use('/uploads', express.static('uploads'));
+app.use((req, res, next) => {
+    console.log('Accessing file:', req.url);
+    next();
+});
+
+// Modify the static middleware
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    fallthrough: false // Return 404 if file not found
+}));
+
+app.use((err, req, res, next) => {
+    if (err.status === 404) {
+        res.status(404).json({ error: 'File not found' });
+    } else {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Import Models
 const Assignment = require('./Models/Assignment');
