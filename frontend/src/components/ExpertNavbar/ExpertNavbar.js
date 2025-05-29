@@ -1,16 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './ExpertNavbar.css';
 
 const ExpertNavbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem('expertUsername') || 'Expert';
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        showDropdown
+      ) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const handleLogout = () => {
-    localStorage.removeItem('expertToken');
-    localStorage.removeItem('expertUsername');
-    navigate('/expert-login');
+    setLoggingOut(true);
+    setTimeout(() => {
+      localStorage.removeItem('expertToken');
+      localStorage.removeItem('expertUsername');
+      navigate('/expert-login');
+    }, 2000);
   };
 
   return (
@@ -27,7 +48,7 @@ const ExpertNavbar = () => {
           Home
         </Link>
 
-        <Link to="/history" className="nav-link">
+        <Link to="/expert-history" className="nav-link">
           <i className="bx bx-history"></i>
           History
         </Link>
@@ -47,16 +68,16 @@ const ExpertNavbar = () => {
           </div>
 
           {showDropdown && (
-            <div className="profile-dropdown">
+            <div className="profile-dropdown" ref={dropdownRef}>
               <ul className="dropdown-menu">
                 <li>
-                  <Link to="/profile" className="dropdown-item">
+                  <Link to="/expert-profile" className="dropdown-item">
                     <i className="bx bx-user"></i>
                     Profile
                   </Link>
                 </li>
                 <li>
-                  <Link to="/settings" className="dropdown-item">
+                  <Link to="/expert-settings" className="dropdown-item">
                     <i className="bx bx-cog"></i>
                     Settings
                   </Link>
@@ -69,9 +90,9 @@ const ExpertNavbar = () => {
                 </li>
                 <li className="dropdown-divider"></li>
                 <li>
-                  <button onClick={handleLogout} className="dropdown-item">
+                  <button onClick={handleLogout} className="dropdown-item" disabled={loggingOut}>
                     <i className="bx bx-log-out"></i>
-                    Logout
+                    {loggingOut ? 'Logging out...' : 'Logout'}
                   </button>
                 </li>
               </ul>

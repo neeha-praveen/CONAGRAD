@@ -1,27 +1,26 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import "./styles/App.css";
+import Services from './components/Services';
+import About from './components/About';
+import Contact from './components/Contact';
+
+// Student Stuff
 import StudentAuth from "./components/studentAuth";
-import ExpertAuth from "./components/expertAuth";
-import ExpertDashboard from "./components/ExpertDashboard";
 import StudentDashboard from "./components/StudentDashboard";
 import AssignmentDetails from "./components/AssignmentDetails";
 import AssignmentHistory from "./components/AssignmentHistory";
 import Profile from "./components/Profile";
 import Settings from "./components/Settings";
 import Help from "./components/Help";
-// Change this line at the top of your file
-import StudentUpload from "./components/StudentUpload";  // Remove the comment
-import YourWork from "./components/YourWork";
-import ExpertProfile from "./components/ExpertProfile";
-import "./styles/App.css";
-import Services from './components/Services';
-import About from './components/About';
-import Contact from './components/Contact';
+import StudentUpload from "./components/StudentUpload"; 
 
+// Expert Stuff
+import ExpertAuth from "./components/expertAuth";
+import ExpertDashboard from "./components/ExpertPages/ExpertDashboard/ExpertDashboard";
+import ExpertProfile from "./components/ExpertPages/ExpertProfile/ExpertProfile";
+import ExpertSettings from "./components/ExpertPages/ExpertSettings/ExpertSettings";
+import ExpertHistory from "./components/ExpertPages/ExpertHistory/ExpertHistory";
 
-// import PendingAssignments from "./components/pendingAssignment";
-// // import Navbar from "./components/Navbar";
-// import AssignedAssignments from "./components/AssignedAssignment";
-// import History from "./components/history";
 
 function Home() {
   return (
@@ -71,15 +70,15 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Landing */}
         <Route path="/" element={<Home />} />
-        <Route path="/student-login" element={<StudentAuth />} />
-        <Route path="/expert-login" element={<ExpertAuth />} />
-        <Route path="/expert-dashboard" element={<ExpertDashboard />} />
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+
+        {/* Student Pages */}
+        <Route path="/student-login" element={<StudentAuth />} />
         <Route path="/student-upload" element={<StudentUpload />} />
-        <Route path="/your-work" element={<YourWork />} />
         <Route path="/assignments" element={<AssignmentDetails />} />
         <Route path="/dashboard" element={<StudentDashboard />} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -88,6 +87,13 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
+
+        {/* Expert Pages */}
+        <Route path="/expert-login" element={<ExpertAuth />} />
+        <Route path="/expert-dashboard" element={<ExpertDashboard />} />
+        <Route path="/expert-profile" element={<ExpertProfile />} />
+        <Route path="/expert-settings" element={<ExpertSettings />} />
+        <Route path="/expert-history" element={<ExpertHistory />} />
       </Routes>
     </Router>
   );

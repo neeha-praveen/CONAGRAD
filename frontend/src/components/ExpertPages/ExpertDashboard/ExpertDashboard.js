@@ -217,7 +217,7 @@ const ExpertDashboard = () => {
                     className="download-btn"
                     onClick={() => window.open(`http://localhost:4000${viewedAssignment.fileUrl}`, '_blank')}
                   >
-                    Download
+                    View
                   </button>
                 </div>
               )}
