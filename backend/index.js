@@ -9,6 +9,8 @@ const authMiddleware = require("./middleware/auth");
 require('dotenv').config();
 const studentRoutes = require('./routes/student');
 
+const expertRoutes = require('./Routes/expertRoutes');
+app.use('/expert', expertRoutes);
 const app = express();
 const PORT = 4000;
 
@@ -116,49 +118,25 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Expert routes
-app.post("/expert/register", async (req, res) => {
-  try {
-    const { name, email, username, password } = req.body;
-    const newExpert = new Expert({ name, email, username, password });
-    await newExpert.save();
-    res.status(201).json({ 
-            message: "Registration successful!",
-      redirectTo: "/expert-login"
-    });
-  } catch (error) {
-        res.status(500).json({ error: "Registration failed" });
-  }
-});
-
-app.post("/expert/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const expert = await Expert.findOne({ username, password });
-        if (!expert) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
+//     try {
+//         const expert = await Expert.findById(req.userId);
+//         if (!expert) {
+//             return res.status(404).json({ error: "Expert not found" });
+//         }
         
-        const token = jwt.sign(
-            { userId: expert._id, userType: 'expert' },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-        
-        res.status(200).json({ 
-            message: "Login successful!",
-            token,
-            user: {
-                id: expert._id,
-                username: expert.username,
-                name: expert.name
-            },
-            redirectTo: "/expert-dashboard"
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Login failed" });
-    }
-});
+//         res.json({
+//             username: expert.username,
+//             name: expert.name,
+//             email: expert.email,
+//             bio: expert.bio,
+//             expertise: expert.expertise,
+//             education: expert.education,
+//             experience: expert.experience
+//         });
+//     } catch (error) {
+//         res.status(500).json({ error: "Failed to fetch profile" });
+//     }
+// });
 
 // Student Upload Assignment Route
 app.post("/upload-assignment", authMiddleware, upload.single('file'), async (req, res) => {
