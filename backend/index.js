@@ -9,8 +9,8 @@ const authMiddleware = require("./middleware/auth");
 require('dotenv').config();
 const studentRoutes = require('./routes/student');
 
-const expertRoutes = require('./Routes/expertRoutes');
-app.use('/expert', expertRoutes);
+// FIXED: Correct path with capital R
+const expertRoutes = require('./routes/expertRoutes'); // Make sure this path is correct
 const app = express();
 const PORT = 4000;
 
@@ -28,13 +28,20 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
 .catch((err) => console.error('MongoDB connection error:', err));
 
-// Middleware
-app.use(cors());
+// FIXED: Enhanced CORS configuration
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'], // Add both variants
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
 app.use(express.json());
 
 // Debug middleware to log all requests
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
+    console.log('Headers:', req.headers);
     next();
 });
 
@@ -51,30 +58,20 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Serve uploaded files
-app.use((req, res, next) => {
-    console.log('Accessing file:', req.url);
-    next();
-});
-
-// Modify the static middleware
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-    fallthrough: false // Return 404 if file not found
+    fallthrough: false
 }));
 
-app.use((err, req, res, next) => {
-    if (err.status === 404) {
-        res.status(404).json({ error: 'File not found' });
-    } else {
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
+// FIXED: Mount expert routes BEFORE other conflicting routes
+app.use('/expert', expertRoutes);
+app.use('/api/student', studentRoutes);
 
 // Import Models
 const Assignment = require('./Models/Assignment');
 const Student = require('./Models/Student');
 const Expert = require('./Models/Expert');
 
-// Routes
+// Student Routes (keep these for backward compatibility)
 app.post("/register", async (req, res) => {
   try {
     const { name, email, username, password } = req.body;
@@ -118,31 +115,11 @@ app.post("/login", async (req, res) => {
     }
 });
 
-//     try {
-//         const expert = await Expert.findById(req.userId);
-//         if (!expert) {
-//             return res.status(404).json({ error: "Expert not found" });
-//         }
-        
-//         res.json({
-//             username: expert.username,
-//             name: expert.name,
-//             email: expert.email,
-//             bio: expert.bio,
-//             expertise: expert.expertise,
-//             education: expert.education,
-//             experience: expert.experience
-//         });
-//     } catch (error) {
-//         res.status(500).json({ error: "Failed to fetch profile" });
-//     }
-// });
-
 // Student Upload Assignment Route
 app.post("/upload-assignment", authMiddleware, upload.single('file'), async (req, res) => {
     try {
         const { title, description, subject, dueDate } = req.body;
-        const studentId = req.userId; // Now coming from auth middleware
+        const studentId = req.userId;
 
         const newAssignment = new Assignment({
             title,
@@ -217,7 +194,6 @@ app.get('/expert/current-assignment', authMiddleware, async (req, res) => {
 // Accept assignment route
 app.post("/accept-assignment/:id", authMiddleware, async (req, res) => {
     try {
-        // Check if expert already has an assignment
         const existingAssignment = await Assignment.findOne({
             status: 'assigned',
             expertId: req.userId
@@ -254,7 +230,7 @@ app.post("/accept-assignment/:id", authMiddleware, async (req, res) => {
     }
 });
 
-// NEW: Expert submits a bid for an assignment
+// Submit bid route
 app.post('/submit-bid/:id', authMiddleware, async (req, res) => {
     try {
         console.log('Submit bid route hit:', req.params.id);
@@ -265,14 +241,12 @@ app.post('/submit-bid/:id', authMiddleware, async (req, res) => {
         const assignmentId = req.params.id;
         const expertId = req.userId;
 
-        // Validate input
         if (!amount || !message) {
             return res.status(400).json({
                 error: 'Amount and message are required'
             });
         }
 
-        // Check if assignment exists and is available
         const assignment = await Assignment.findById(assignmentId);
         if (!assignment) {
             return res.status(404).json({
@@ -286,7 +260,6 @@ app.post('/submit-bid/:id', authMiddleware, async (req, res) => {
             });
         }
 
-        // Add bid to assignment
         const bid = {
             expertId,
             amount: parseFloat(amount),
@@ -294,16 +267,13 @@ app.post('/submit-bid/:id', authMiddleware, async (req, res) => {
             timestamp: new Date()
         };
 
-        // Check if expert has already bid
         const existingBidIndex = assignment.bids.findIndex(
             b => b.expertId.toString() === expertId
         );
 
         if (existingBidIndex !== -1) {
-            // Update existing bid
             assignment.bids[existingBidIndex] = bid;
         } else {
-            // Add new bid
             assignment.bids.push(bid);
         }
 
@@ -348,7 +318,7 @@ app.post("/complete-assignment/:id", async (req, res) => {
     }
 });
 
-// List all collections (for debugging)
+// Debug routes
 app.get("/debug/collections", async (req, res) => {
     try {
         const collections = await mongoose.connection.db.listCollections().toArray();
@@ -358,19 +328,11 @@ app.get("/debug/collections", async (req, res) => {
     }
 });
 
-// Debug route to check database connection
 app.get('/debug/database', async (req, res) => {
     try {
-        // Check connection status
         const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-        
-        // Get all collections
         const collections = await mongoose.connection.db.listCollections().toArray();
-        
-        // Count documents in assignments collection
         const assignmentCount = await Assignment.countDocuments();
-        
-        // Get a sample assignment
         const sampleAssignment = await Assignment.findOne();
         
         res.json({
@@ -385,6 +347,27 @@ app.get('/debug/database', async (req, res) => {
             stack: error.stack
         });
     }
+});
+
+// REMOVED: Duplicate expert profile route since it's now in expertRoutes
+
+// Root route
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'Expert Assignment API Server',
+        endpoints: {
+            test: '/test',
+            assignments: '/available-assignments',
+            currentAssignment: '/expert/current-assignment',
+            expertLogin: '/expert/login',
+            expertRegister: '/expert/register'
+        }
+    });
+});
+
+// Test route
+app.get('/test', (req, res) => {
+    res.json({ message: 'Server is running' });
 });
 
 // Add error handling middleware
@@ -411,52 +394,11 @@ const addTestData = async () => {
     }
 };
 
-// Add this route to get expert profile
-app.get("/expert/profile", async (req, res) => {
-    try {
-        // For now, getting username from token. You'll implement proper auth later
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ error: "No token provided" });
-        }
-
-        // Get expert data from database
-        const expert = await Expert.findById(req.expertId); // You'll get this from auth middleware
-        if (!expert) {
-            return res.status(404).json({ error: "Expert not found" });
-        }
-
-        // Return only necessary data
-        res.json({
-            username: expert.username,
-            name: expert.name,
-            email: expert.email
-        });
-    } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.status(500).json({ error: "Failed to fetch profile" });
-    }
-});
-
-// Root route
-app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Expert Assignment API Server',
-        endpoints: {
-            test: '/test',
-            assignments: '/available-assignments',
-            currentAssignment: '/expert/current-assignment'
-        }
-    });
-});
-
-// Test route
-app.get('/test', (req, res) => {
-    res.json({ message: 'Server is running' });
-});
-
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log('Expert routes available at:');
+  console.log('- POST /expert/register');
+  console.log('- POST /expert/login');
+  console.log('- GET /expert/profile');
 });
-app.use('/api/student', studentRoutes);
