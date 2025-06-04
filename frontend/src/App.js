@@ -16,10 +16,10 @@ import StudentUpload from "./components/StudentUpload";
 
 // Expert Stuff
 import ExpertAuth from "./components/expertAuth";
-import ExpertDashboard from "./components/ExpertPages/ExpertDashboard/ExpertDashboard";
-import ExpertProfile from "./components/ExpertPages/ExpertProfile/ExpertProfile";
-import ExpertSettings from "./components/ExpertPages/ExpertSettings/ExpertSettings";
-import ExpertHistory from "./components/ExpertPages/ExpertHistory/ExpertHistory";
+import ExpertDashboard from "./ExpertPages/ExpertDashboard/ExpertDashboard";
+import ExpertProfile from "./ExpertPages/ExpertProfile/ExpertProfile";
+import ExpertSettings from "./ExpertPages/ExpertSettings/ExpertSettings";
+import ExpertHistory from "./ExpertPages/ExpertHistory/ExpertHistory";
 
 
 function Home() {
