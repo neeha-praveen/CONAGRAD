@@ -198,7 +198,6 @@ export default function ExpertAuth() {
           </button>
           <p>or login with social platforms</p>
           <div className="social-icons">
-            <a href="#" onClick={(e) => e.preventDefault()}>
               <i className="bx bxl-google"></i>
           </div>
         </form>
@@ -259,7 +258,6 @@ export default function ExpertAuth() {
           </button>
           <p>or register with social platforms</p>
           <div className="social-icons">
-            <a href="#" onClick={(e) => e.preventDefault()}>
               <i className="bx bxl-google"></i>
           </div>
         </form>
