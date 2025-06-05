@@ -20,6 +20,7 @@ import ExpertDashboard from "./ExpertPages/ExpertDashboard/ExpertDashboard";
 import ExpertProfile from "./ExpertPages/ExpertProfile/ExpertProfile";
 import ExpertSettings from "./ExpertPages/ExpertSettings/ExpertSettings";
 import ExpertHistory from "./ExpertPages/ExpertHistory/ExpertHistory";
+import YourWork from "./ExpertPages/YourWork/YourWork";
 
 
 function Home() {
@@ -94,6 +95,7 @@ function App() {
         <Route path="/expert-profile" element={<ExpertProfile />} />
         <Route path="/expert-settings" element={<ExpertSettings />} />
         <Route path="/expert-history" element={<ExpertHistory />} />
+        <Route path="/your-work" element={<YourWork />} />
       </Routes>
     </Router>
   );
