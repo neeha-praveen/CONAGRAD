@@ -48,6 +48,18 @@ const AssignmentSchema = new mongoose.Schema({
         ref: 'students',
         required: true
     },
+    expertDocument: {
+        fileName: String,
+        fileUrl: String,
+        fileType: String,
+        fileSize: Number,
+        uploadDate: {
+            type: Date,
+            default: Date.now
+        }
+    },
+    expertMessage: String,
+    completionDate: Date,
     bids: [BidSchema]
 });
 

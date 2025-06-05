@@ -200,7 +200,6 @@ export default function ExpertAuth() {
           <div className="social-icons">
             <a href="#" onClick={(e) => e.preventDefault()}>
               <i className="bx bxl-google"></i>
-            </a>
           </div>
         </form>
       </div>
@@ -262,7 +261,6 @@ export default function ExpertAuth() {
           <div className="social-icons">
             <a href="#" onClick={(e) => e.preventDefault()}>
               <i className="bx bxl-google"></i>
-            </a>
           </div>
         </form>
       </div>
