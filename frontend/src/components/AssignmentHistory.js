@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { API_ENDPOINTS, getAuthHeader } from '../config/api';
+import { useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS, axiosInstance } from '../config/api';
 import DashboardLayout from './layouts/DashboardLayout';
-import { FaHistory, FaCheck, FaClock, FaDownload, FaEye, FaArrowLeft } from 'react-icons/fa';
+import { FaHistory, FaCheck, FaClock, FaDownload, FaEye, FaArrowLeft, FaComments } from 'react-icons/fa';
 import './AssignmentHistory.css';
 
 const AssignmentHistory = () => {
@@ -14,6 +14,7 @@ const AssignmentHistory = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [downloadingId, setDownloadingId] = useState(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssignments();
@@ -21,9 +22,8 @@ const AssignmentHistory = () => {
 
   const fetchAssignments = async () => {
     try {
-      const response = await axios.get(API_ENDPOINTS.STUDENT_ASSIGNMENTS, {
-        headers: getAuthHeader()
-      });
+      // Use axiosInstance for consistency
+      const response = await axiosInstance.get('/student/assignments');
       setAssignments(response.data);
       setLoading(false);
     } catch (error) {
@@ -33,17 +33,29 @@ const AssignmentHistory = () => {
   };
 
   const handleDownload = async (fileUrl, fileName, assignmentId) => {
+    if (!fileUrl || !fileName) {
+      setError('File information is missing');
+      return;
+    }
+
     try {
       setDownloadingId(assignmentId);
       setDownloadProgress(0);
       setError('');
       
-      // Extract filename from fileUrl
-      const filename = fileUrl.split('/').pop();
-      const downloadUrl = API_ENDPOINTS.DOWNLOAD_FILE(filename);
+      // Consistent URL handling - try multiple approaches
+      let downloadUrl;
       
-      const response = await axios.get(downloadUrl, {
-        headers: getAuthHeader(),
+      if (fileUrl.startsWith('/uploads/') || fileUrl.startsWith('uploads/')) {
+        // Direct file access
+        downloadUrl = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+      } else {
+        // Use the download endpoint with filename
+        const filename = fileUrl.split('/').pop();
+        downloadUrl = `/student/download/${filename}`;
+      }
+      
+      const response = await axiosInstance.get(downloadUrl, {
         responseType: 'blob',
         onDownloadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -51,33 +63,95 @@ const AssignmentHistory = () => {
         }
       });
       
-      const blob = new Blob([response.data], { 
-        type: response.headers['content-type'] 
-      });
-      
+      // Create and trigger download
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      
+      // Cleanup
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
       // Show success message
       const successMessage = document.createElement('div');
       successMessage.className = 'download-success';
       successMessage.textContent = 'Download completed successfully!';
+      successMessage.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 4px;
+        z-index: 1000;
+      `;
       document.body.appendChild(successMessage);
       setTimeout(() => successMessage.remove(), 3000);
       
     } catch (error) {
       console.error('Download error:', error);
-      setError(
-        error.response?.status === 404
-          ? 'File not found. Please contact support.'
-          : 'Failed to download file. Please try again.'
-      );
+      
+      // If the first approach fails, try alternative approaches
+      if (error.response?.status === 404) {
+        try {
+          // Try alternative URL construction
+          let alternativeUrl;
+          if (fileUrl.includes('/uploads/')) {
+            // Try without /uploads/ prefix
+            const filename = fileUrl.split('/').pop();
+            alternativeUrl = `/student/download/${filename}`;
+          } else {
+            // Try with /uploads/ prefix
+            alternativeUrl = `/uploads/${fileUrl}`;
+          }
+          
+          const response = await axiosInstance.get(alternativeUrl, {
+            responseType: 'blob',
+            onDownloadProgress: (progressEvent) => {
+              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setDownloadProgress(progress);
+            }
+          });
+          
+          // Same download logic as above
+          const blob = new Blob([response.data]);
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', fileName);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          
+          const successMessage = document.createElement('div');
+          successMessage.className = 'download-success';
+          successMessage.textContent = 'Download completed successfully!';
+          successMessage.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+          `;
+          document.body.appendChild(successMessage);
+          setTimeout(() => successMessage.remove(), 3000);
+          
+        } catch (secondError) {
+          console.error('Second download attempt failed:', secondError);
+          setError('File not found on the server. Please contact support.');
+        }
+      } else {
+        setError('Failed to download file. Please try again.');
+      }
     } finally {
       setDownloadingId(null);
       setDownloadProgress(0);
@@ -154,8 +228,8 @@ const AssignmentHistory = () => {
           <div className="error-message">
             <p>{error}</p>
             <button onClick={() => setError('')}>Dismiss</button>
-            {error.includes('download') && (
-              <button onClick={() => handleDownload(selectedAssignment?.fileUrl, selectedAssignment?.fileName, selectedAssignment?._id)}>
+            {error.includes('download') && selectedAssignment && (
+              <button onClick={() => handleDownload(selectedAssignment.fileUrl, selectedAssignment.fileName, selectedAssignment._id)}>
                 Try Again
               </button>
             )}
@@ -174,12 +248,7 @@ const AssignmentHistory = () => {
           </div>
         )}
 
-        {loading ? (
-          <div className="loading-spinner">
-            <div className="spinner"></div>
-            <p>Loading assignments...</p>
-          </div>
-        ) : showDetails ? (
+        {showDetails ? (
           <div className="assignment-details-view">
             <button className="back-button" onClick={handleBack}>
               <FaArrowLeft /> Back to Assignments
@@ -193,19 +262,19 @@ const AssignmentHistory = () => {
               </div>
               <div className="details-content">
                 <p>
-                  <strong>Description</strong>
+                  <strong>Description: </strong>
                   {selectedAssignment.description}
                 </p>
                 <p>
-                  <strong>Submission Date</strong>
+                  <strong>Submission Date: </strong>
                   {new Date(selectedAssignment.submittedDate).toLocaleDateString()}
                 </p>
                 <p>
-                  <strong>File Information</strong>
+                  <strong>File Information: </strong>
                   {selectedAssignment.fileName} ({selectedAssignment.fileType}) - {Math.round(selectedAssignment.fileSize / 1024)} KB
                 </p>
                 <p>
-                  <strong>Status</strong>
+                  <strong>Status: </strong>
                   {selectedAssignment.status.charAt(0).toUpperCase() + selectedAssignment.status.slice(1)}
                 </p>
               </div>
@@ -241,6 +310,7 @@ const AssignmentHistory = () => {
                     Submitted: {new Date(assignment.submittedDate).toLocaleDateString()}
                   </p>
                 </div>
+                {/* Inside the card-actions div in the assignments-grid section, add a View Bids button */}
                 <div className="card-actions">
                   <button 
                     className="view-button"
@@ -248,11 +318,21 @@ const AssignmentHistory = () => {
                   >
                     <FaEye /> View Details
                   </button>
+                  {assignment.bids && assignment.bids.length > 0 && (
+                    <button 
+                      className="bids-button"
+                      onClick={() => navigate(`/assignments/${assignment._id}/bids`)}
+                    >
+                      <FaComments /> View Bids ({assignment.bids.length})
+                    </button>
+                  )}
                   <button 
                     className="download-button"
                     onClick={() => handleDownload(assignment.fileUrl, assignment.fileName, assignment._id)}
+                    disabled={downloadingId === assignment._id}
                   >
-                    <FaDownload /> Download
+                    <FaDownload /> 
+                    {downloadingId === assignment._id ? 'Downloading...' : 'Download'}
                   </button>
                 </div>
               </div>
@@ -264,4 +344,4 @@ const AssignmentHistory = () => {
   );
 };
 
-export default AssignmentHistory; 
+export default AssignmentHistory;

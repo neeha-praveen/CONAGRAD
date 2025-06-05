@@ -1,0 +1,131 @@
+.assignment-bids-container {
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.bids-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.bids-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: none;
+    color: #4a6fa5;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-right: 15px;
+    padding: 5px 0;
+}
+
+.back-button:hover {
+    text-decoration: underline;
+}
+
+.assignment-summary {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.summary-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.file-icon {
+    color: #4a6fa5;
+    font-size: 1.2rem;
+}
+
+.summary-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #333;
+}
+
+.assignment-description {
+    margin: 0 0 15px 0;
+    color: #555;
+    line-height: 1.6;
+}
+
+.assignment-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.success-message {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.error-container {
+    text-align: center;
+    padding: 30px;
+}
+
+.error-container p {
+    color: #721c24;
+    margin-bottom: 20px;
+}
+
+.error-container button {
+    background-color: #4a6fa5;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.bids-unavailable {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    color: #666;
+}
+
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4a6fa5;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

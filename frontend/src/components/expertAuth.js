@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./ExpertAuth.css"; // Import the CSS
+import "./exp_style.css"; // Import the CSS
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "boxicons/css/boxicons.min.css"; // Import Boxicons
@@ -93,9 +93,9 @@ export default function ExpertAuth() {
           </button>
           <p>or login with social platforms</p>
           <div className="social-icons">
-            <a href="#">
+            <button type="button" className="social-button">
               <i className="bx bxl-google"></i>
-            </a>
+            </button>
           </div>
         </form>
       </div>
@@ -151,9 +151,9 @@ export default function ExpertAuth() {
           </button>
           <p>or register with social platforms</p>
           <div className="social-icons">
-            <a href="#">
+            <button type="button" className="social-button">
               <i className="bx bxl-google"></i>
-            </a>
+            </button>
           </div>
         </form>
       </div>

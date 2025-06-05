@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaFilter, FaEye, FaDownload, FaUpload } from 'react-icons/fa';
+import { FaFilter, FaEye, FaDownload, FaUpload, FaComments } from 'react-icons/fa';
 import DashboardLayout from './layouts/DashboardLayout';
-import { API_ENDPOINTS, getAuthHeader } from '../config/api';
+import { axiosInstance } from '../config/api';
 import './StudentDashboard.css';
 
 export default function StudentDashboard() {
@@ -22,57 +21,92 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
 
   const handleDownload = async (fileUrl, fileName, assignmentId) => {
-    if (!fileUrl || !fileName || !assignmentId) {
-      setError('Invalid download parameters');
+    if (!fileUrl || !fileName) {
+      setError('File information is missing');
       return;
     }
 
     try {
-      setDownloadingId(assignmentId);
-      setDownloadProgress(0);
-      setError('');
-      
-      // Extract filename from fileUrl
-      const filename = fileUrl.split('/').pop();
-      const downloadUrl = API_ENDPOINTS.DOWNLOAD_FILE(filename);
-      
-      const response = await axios.get(downloadUrl, {
-        headers: getAuthHeader(),
-        responseType: 'blob',
-        onDownloadProgress: (progressEvent) => {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setDownloadProgress(progress);
+        setDownloadingId(assignmentId);
+        setDownloadProgress(0);
+        setError('');
+        
+        // Use the fileUrl directly as it should contain the complete path
+        // If fileUrl starts with '/uploads/', use it directly
+        // If it's just a filename, construct the download URL
+        let downloadUrl;
+        if (fileUrl.startsWith('/uploads/') || fileUrl.startsWith('uploads/')) {
+            // Direct file access
+            downloadUrl = fileUrl.startsWith('/') ? fileUrl : `/${fileUrl}`;
+        } else {
+            // Use the download endpoint with filename
+            const filename = fileUrl.split('/').pop();
+            downloadUrl = `/student/download/${filename}`;
         }
-      });
-      
-      const blob = new Blob([response.data], { 
-        type: response.headers['content-type'] 
-      });
-      
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      
-      setSuccess('Download completed successfully!');
-      setTimeout(() => setSuccess(''), 3000);
-      
+        
+        const response = await axiosInstance.get(downloadUrl, {
+            responseType: 'blob',
+            onDownloadProgress: (progressEvent) => {
+                const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setDownloadProgress(progress);
+            }
+        });
+        
+        // Create download link
+        const blob = new Blob([response.data]);
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        setSuccess('Download completed successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+        
     } catch (error) {
-      console.error('Download error:', error);
-      setError(
-        error.response?.status === 404
-          ? 'File not found. Please contact support.'
-          : 'Failed to download file. Please try again.'
-      );
+        console.error('Download error:', error);
+        setError(
+          error.response?.status === 404
+            ? 'File not found on the server. Please contact support.'
+            : 'Failed to download file. Please try again.'
+        );
     } finally {
-      setDownloadingId(null);
-      setDownloadProgress(0);
+        setDownloadingId(null);
+        setDownloadProgress(0);
     }
   };
+
+  // Update fetchAssignments to use axiosInstance consistently
+  const fetchAssignments = useCallback(async () => {
+    try {
+        const token = localStorage.getItem('studentToken');
+        
+        if (!token) {
+            navigate('/');
+            return;
+        }
+
+        // Use axiosInstance which handles the base URL and auth
+        const response = await axiosInstance.get('/student/assignments');
+
+        if (response.data && Array.isArray(response.data)) {
+            setAssignments(response.data);
+            setError('');
+        } else {
+            setAssignments([]);
+            setError('No assignments found.');
+        }
+    } catch (error) {
+        console.error('Error fetching assignments:', error);
+        setError('Failed to fetch assignments. Please try again.');
+        setAssignments([]);
+    }
+  }, [navigate]);
 
   useEffect(() => {
     const validateSession = () => {
@@ -87,20 +121,15 @@ export default function StudentDashboard() {
     if (validateSession()) {
       fetchAssignments();
     }
-  }, [navigate]);
+  }, [fetchAssignments, navigate]);
 
-  const fetchAssignments = async () => {
-    try {
-      const response = await axios.get(API_ENDPOINTS.STUDENT_ASSIGNMENTS, {
-        headers: getAuthHeader()
-      });
-      setAssignments(response.data || []);
-    } catch (error) {
-      console.error('Error details:', error.response || error);
-      setError('Failed to fetch assignments');
-    }
+  // Navigate to upload page instead of inline upload
+  const handleUploadClick = () => {
+    navigate('/student-upload');
   };
 
+  // Used for inline file upload modal - keeping for backward compatibility
+  // eslint-disable-next-line no-unused-vars
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
@@ -121,16 +150,15 @@ export default function StudentDashboard() {
     }
 
     const formData = new FormData();
-    formData.append('assignment', file);
+    formData.append('file', file);
     formData.append('title', title);
     formData.append('description', description);
-    formData.append('deadline', deadline);
-    formData.append('status', 'pending');
+    formData.append('subject', 'General');
+    formData.append('dueDate', deadline);
 
     try {
-      await axios.post(API_ENDPOINTS.UPLOAD_ASSIGNMENT, formData, {
+      const response = await axiosInstance.post('/student/upload-assignment', formData, {
         headers: {
-          ...getAuthHeader(),
           'Content-Type': 'multipart/form-data'
         },
         onUploadProgress: (progressEvent) => {
@@ -138,16 +166,20 @@ export default function StudentDashboard() {
           setUploadProgress(progress);
         }
       });
-      setSuccess('Assignment uploaded successfully!');
-      setFile(null);
-      setTitle('');
-      setDescription('');
-      setDeadline('');
-      setUploadProgress(0);
-      setShowDetailsForm(false);
-      fetchAssignments();
+
+      if (response.data) {
+        setSuccess('Assignment uploaded successfully!');
+        setFile(null);
+        setTitle('');
+        setDescription('');
+        setDeadline('');
+        setUploadProgress(0);
+        setShowDetailsForm(false);
+        fetchAssignments();
+      }
     } catch (error) {
-      setError('Failed to upload assignment');
+      console.error('Upload error:', error.response?.data || error);
+      setError(error.response?.data?.error || 'Failed to upload assignment');
     }
   };
 
@@ -252,6 +284,7 @@ export default function StudentDashboard() {
                     </span>
                   </div>
 
+                  {/* Inside the assignment-actions div, add a View Bids button */}
                   <div className="assignment-actions">
                     <button 
                       className="action-btn view"
@@ -259,6 +292,14 @@ export default function StudentDashboard() {
                     >
                       <FaEye /> View
                     </button>
+                    {assignment.bids && assignment.bids.length > 0 && (
+                      <button 
+                        className="action-btn bids"
+                        onClick={() => navigate(`/assignments/${assignment._id}/bids`)}
+                      >
+                        <FaComments /> Bids ({assignment.bids.length})
+                      </button>
+                    )}
                     <button 
                       className={`action-btn download ${downloadingId === assignment._id ? 'downloading' : ''}`}
                       onClick={() => handleDownload(assignment.fileUrl, assignment.fileName, assignment._id)}
@@ -277,21 +318,14 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Upload Button */}
+        {/* Upload Button - Navigate to upload page */}
         <div className="upload-section">
-          <input
-            type="file"
-            id="file-upload"
-            accept=".pdf,.doc,.docx,.ppt,.pptx"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
-          />
-          <label htmlFor="file-upload" className="upload-button">
+          <button className="upload-button" onClick={handleUploadClick}>
             <FaUpload /> Upload Assignment
-          </label>
+          </button>
         </div>
 
-        {/* Upload Form Modal */}
+        {/* Keep the modal for backward compatibility but recommend using the dedicated upload page */}
         {showDetailsForm && (
           <div className="modal-overlay">
             <div className="modal-content">

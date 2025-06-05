@@ -1,0 +1,398 @@
+/* Main container styling */
+.student-upload-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 80px);
+  padding-left: 100px;
+  margin-top: 200px;
+  width: 203vh;
+  max-width: 800px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Card styling with animations */
+.upload-card {
+  background: var(--card-background, rgba(20, 20, 20, 0.9));
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  width: 203vh;
+  max-width: 800px;
+  padding: 2.5rem;
+  transition: all 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  animation: slideUp 0.5s ease-out;
+}
+
+.upload-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.upload-card h2 {
+  margin: 0 0 1.5rem 0;
+  color: var(--text-color, white);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  font-size: 1.8rem;
+  text-align: center;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+  animation: fadeIn 0.8s ease-out;
+}
+
+/* Form group styling */
+.form-group {
+  margin-bottom: 1.5rem;
+  animation: slideInRight 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.form-group:nth-child(1) { animation-delay: 0.1s; }
+.form-group:nth-child(2) { animation-delay: 0.2s; }
+.form-group:nth-child(3) { animation-delay: 0.3s; }
+.form-group:nth-child(4) { animation-delay: 0.4s; }
+.form-group:nth-child(5) { animation-delay: 0.5s; }
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color, white);
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-color, white);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--primary-color, #4a90e2);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* File upload styling */
+.file-upload {
+  margin-bottom: 2rem;
+}
+
+.file-input-container {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.file-input-container:hover {
+  border-color: var(--primary-color, #4a90e2);
+}
+
+.file-name {
+  flex: 1;
+  padding: 0.8rem;
+  color: var(--text-color, white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-input-label {
+  display: inline-block;
+  padding: 0.8rem 1.5rem;
+  background: var(--primary-color, #4a90e2);
+  color: white;
+  cursor: pointer;
+  margin: 0;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.file-input-label:hover {
+  background: var(--primary-dark, #357abd);
+}
+
+/* Form actions styling */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  animation: fadeIn 1s ease-out;
+}
+
+.submit-btn,
+.cancel-btn {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.submit-btn {
+  background: var(--primary-color, #4a90e2);
+  color: white;
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-color, white);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.submit-btn:hover {
+  background: var(--primary-dark, #357abd);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Error message styling */
+.error-message {
+  background-color: rgba(198, 40, 40, 0.2);
+  color: #ff6b6b;
+  padding: 0.8rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+  20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+/* Loading state */
+.submit-btn:disabled {
+  background: #7a7a7a;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .upload-card {
+    padding: 1.5rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .student-upload-container {
+    padding: 1rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .student-upload-container {
+    background-color: transparent;
+  }
+  
+  .upload-card {
+    background: rgba(20, 20, 20, 0.9);
+  }
+  
+  .form-group input,
+  .form-group textarea {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+  }
+  
+  .file-name {
+    color: white;
+  }
+}
+
+/* Subject selector styling */
+.subject-selector {
+  position: relative;
+  width: 100%;
+}
+
+.selected-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0.5rem;
+  min-height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  align-items: center;
+}
+
+.selected-subjects:hover {
+  border-color: var(--primary-color, #4a90e2);
+}
+
+.subject-tag {
+  display: flex;
+  align-items: center;
+  background: rgba(74, 144, 226, 0.2);
+  color: var(--text-color, white);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  animation: fadeIn 0.3s ease-out;
+  transition: all 0.3s ease;
+}
+
+.subject-tag:hover {
+  background: rgba(74, 144, 226, 0.3);
+}
+
+.remove-subject {
+  background: none;
+  border: none;
+  color: var(--text-color, white);
+  margin-left: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.remove-subject:hover {
+  color: #ff6b6b;
+  transform: scale(1.2);
+}
+
+.subject-input {
+  flex: 1;
+  min-width: 100px;
+  background: transparent;
+  border: none;
+  color: var(--text-color, white);
+  padding: 4px;
+  cursor: pointer;
+}
+
+.subject-input:focus {
+  outline: none;
+}
+
+.subject-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-top: 5px;
+  z-index: 10;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.subject-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  color: var(--text-color, white);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.subject-option:hover {
+  background: rgba(74, 144, 226, 0.2);
+}
+
+.add-subject {
+  color: var(--primary-color, #4a90e2);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.subject-option:hover .add-subject {
+  transform: scale(1.2);
+}
+
+/* Custom scrollbar for dropdown */
+.subject-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.subject-dropdown::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.subject-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(74, 144, 226, 0.5);
+  border-radius: 3px;
+}
+
+.subject-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 144, 226, 0.7);
+}

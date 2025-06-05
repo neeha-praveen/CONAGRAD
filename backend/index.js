@@ -27,7 +27,13 @@ mongoose.connect(process.env.MONGODB_URI, {
 .catch((err) => console.error('MongoDB connection error:', err));
 
 // Middleware
-app.use(cors());
+// Middleware
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token']
+}));
 app.use(express.json());
 
 // Debug middleware to log all requests
@@ -461,8 +467,62 @@ app.get('/test', (req, res) => {
     res.json({ message: 'Server is running' });
 });
 
-// Start server
+// Mount student routes
+app.use('/api/student', studentRoutes);
+
+// Add this new endpoint for student assignments
+app.get('/api/student/assignments', authMiddleware, async (req, res) => {
+    try {
+        const assignments = await Assignment
+            .find({ studentId: req.userId })
+            .sort({ createdAt: -1 });
+        res.json(assignments);
+    } catch (error) {
+        console.error('Error fetching student assignments:', error);
+        res.status(500).json({ error: "Failed to fetch assignments" });
+    }
+});
+
+// Add this new endpoint for assignment uploads
+app.post('/api/assignments/upload', authMiddleware, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const { title, description, subject, dueDate } = req.body;
+        
+        // Create new assignment
+        const newAssignment = new Assignment({
+            title,
+            description,
+            subject: subject || 'General',
+            deadline: dueDate || null,
+            fileUrl: `/uploads/${req.file.filename}`,
+            fileName: req.file.originalname,
+            fileType: req.file.mimetype,
+            studentId: req.userId,
+            status: 'pending',
+            submittedDate: new Date()
+        });
+        
+        await newAssignment.save();
+        
+        res.status(201).json({
+            message: 'Assignment uploaded successfully',
+            assignment: newAssignment
+        });
+    } catch (error) {
+        console.error('Error uploading assignment:', error);
+        res.status(500).json({ error: 'Failed to upload assignment' });
+    }
+});
+
+// Before app.listen
+addTestData().then(() => {
+  console.log('Test data check complete');
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-app.use('/api/student', studentRoutes);
