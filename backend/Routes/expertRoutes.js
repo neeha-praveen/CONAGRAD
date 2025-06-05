@@ -3,6 +3,8 @@ const router = express.Router();
 const Expert = require('../Models/Expert');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const Assignment = require('../Models/Assignment');
+const upload = require('../middleware/upload');
 
 // Expert registration
 router.post("/register", async (req, res) => {
@@ -73,6 +75,52 @@ router.get("/profile", auth, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+// Get all assigned assignments for an expert
+router.get('/assigned-assignments', auth, async (req, res) => {
+  try {
+    const expertId = req.userId;
+    const assignments = await Assignment.find({ expertId })
+      .populate('studentId', 'username')
+      .select('title description dueDate status fileUrl fileName studentId');
+    
+    res.json(assignments);
+  } catch (err) {
+    console.error('Error fetching assigned assignments:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Submit completed assignment with note and file
+router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, res) => {
+  try {
+    const assignmentId = req.params.id;
+    const note = req.body.note;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ error: 'File is required' });
+    }
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    assignment.status = 'completed';
+    assignment.submissionNote = note;
+    assignment.submittedFileUrl = `/uploads/${file.filename}`;
+    assignment.submittedFileName = file.originalname;
+    assignment.submittedAt = new Date();
+
+    await assignment.save();
+
+    res.json({ message: 'Work submitted successfully', assignment });
+  } catch (error) {
+    console.error('Submit assignment error:', error);
+    res.status(500).json({ error: 'Failed to submit assignment' });
   }
 });
 

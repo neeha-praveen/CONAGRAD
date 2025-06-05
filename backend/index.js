@@ -10,7 +10,7 @@ require('dotenv').config();
 const studentRoutes = require('./routes/student');
 
 // FIXED: Correct path with capital R
-const expertRoutes = require('./routes/expertRoutes'); // Make sure this path is correct
+const expertRoutes = require('./Routes/expertRoutes'); // Make sure this path is correct
 const app = express();
 const PORT = 4000;
 
@@ -61,7 +61,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 }));
 
 // FIXED: Mount expert routes BEFORE other conflicting routes
-app.use('/expert', expertRoutes);
+app.use('/api/expert', expertRoutes);
 app.use('/api/student', studentRoutes);
 
 // Import Models
@@ -486,6 +486,7 @@ app.post('/api/assignments/upload', authMiddleware, upload.single('file'), async
         res.status(500).json({ error: 'Failed to upload assignment' });
     }
 });
+
 
 // Before app.listen
 addTestData().then(() => {

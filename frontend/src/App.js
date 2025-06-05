@@ -95,7 +95,7 @@ function App() {
         <Route path="/expert-profile" element={<ExpertProfile />} />
         <Route path="/expert-settings" element={<ExpertSettings />} />
         <Route path="/expert-history" element={<ExpertHistory />} />
-        <Route path="/your-work" element={<YourWork />} />
+        <Route path="/your-work/:assignmentId" element={<YourWork />} />
       </Routes>
     </Router>
   );

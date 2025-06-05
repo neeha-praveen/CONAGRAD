@@ -34,7 +34,7 @@ export default function ExpertAuth() {
     try {
       console.log('Attempting login with:', { username: loginData.username });
       
-      const response = await axios.post("/expert/login", {
+      const response = await axios.post("api/expert/login", {
         username: loginData.username.trim(),
         password: loginData.password
       }, {
@@ -48,6 +48,8 @@ export default function ExpertAuth() {
       // Store authentication data
       if (response.data.token) {
         localStorage.setItem('expertToken', response.data.token);
+        console.log('Current token:', localStorage.getItem('token'));
+
         localStorage.setItem('expertUsername', response.data.expert.username);
         localStorage.setItem('expertName', response.data.expert.name);
         localStorage.setItem('expertEmail', response.data.expert.email);

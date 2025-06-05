@@ -60,7 +60,11 @@ const AssignmentSchema = new mongoose.Schema({
     },
     expertMessage: String,
     completionDate: Date,
-    bids: [BidSchema]
+    bids: [BidSchema],
+    submissionNote: String,
+    submittedFileUrl: String,
+    submittedFileName: String,
+    submittedAt: Date
 });
 
 module.exports = mongoose.model('Assignment', AssignmentSchema);

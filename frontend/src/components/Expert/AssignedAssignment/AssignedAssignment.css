@@ -1,11 +1,11 @@
-/* Keep original container and header styles */
+/* Container and header styles */
 .assigned-container {
     padding: 20px;
     max-width: 1300px;
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
-    padding-top: 140px;
+    margin-top: 700px;
 }
 
 .assigned-header {
@@ -26,6 +26,27 @@
     line-height: 1.2;
 }
 
+/* Loading and error states */
+.loading-message, .error-message, .no-assignments {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.error-message {
+    color: #e74c3c;
+    background: #fdf2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+}
+
+.no-assignments {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
 /* Enhanced card styling */
 .assigned-assignment-card {
     background: white;
@@ -37,6 +58,7 @@
     overflow: hidden;
     width: 100%;
     position: relative;
+    margin-bottom: 20px;
 }
 
 .assigned-assignment-card:hover {
@@ -108,14 +130,13 @@
     gap: 12px;
 }
 
-/* Unified styling for both view button and status badge */
-.view-button,
-.status-pending {
+/* View button styling */
+.view-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 6px 16px;
+    padding: 8px 16px;
     border: none;
     border-radius: 20px;
     font-weight: 600;
@@ -126,10 +147,6 @@
     height: 32px;
     text-decoration: none;
     box-sizing: border-box;
-}
-
-/* View button specific styling */
-.view-button {
     background: linear-gradient(135deg, #5271FF, #3498db);
     color: white;
     box-shadow: 0 2px 8px rgba(82, 113, 255, 0.3);
@@ -141,12 +158,38 @@
     background: linear-gradient(135deg, #4a67ff, #2980b9);
 }
 
-/* Status badge specific styling */
+/* Status badge styling */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    min-width: 80px;
+    height: 32px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .status-pending {
     background: linear-gradient(135deg, #ff9a56, #ff6b35);
     color: white;
     box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
-    cursor: default;
+}
+
+.status-completed {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+}
+
+.status-assigned {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+    height:32px;
 }
 
 .button-icon {
@@ -159,7 +202,6 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-bottom: 20px;
 }
 
 .detail-item {
@@ -171,18 +213,18 @@
 }
 
 .detail-item:hover {
-    background: #f0f8ff;
-    border-color: #d1e7f5;
+    background: #e8f4fd;
+    border-color: #bfdbfe;
 }
 
 .description-item {
     background: #f0f8ff;
-    border-color: #bfdbfe;
+    border-color: #d1e7f5;
 }
 
 .due-date-item {
     background: #f0f8ff;
-    border-color: #bfdbfe;
+    border-color: #d1e7f5;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -192,6 +234,7 @@
     display: flex;
     align-items: flex-start;
     gap: 12px;
+    flex: 1;
 }
 
 .detail-icon {
@@ -232,6 +275,7 @@
     color: #d97706;
     font-size: 0.85rem;
     font-weight: 600;
+    flex-shrink: 0;
 }
 
 .clock-icon {
@@ -241,6 +285,10 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+    .assigned-container {
+        padding: 15px;
+    }
+    
     .assignment-header {
         flex-direction: column;
         align-items: stretch;
@@ -262,9 +310,25 @@
         align-self: flex-start;
     }
     
-    .assignment-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+    .assigned-assignment-card {
+        padding: 20px;
+    }
+    
+    .assignment-title-section {
+        gap: 12px;
+    }
+    
+    .assignment-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .assignment-icon .icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .title-info h3 {
+        font-size: 1.2rem;
     }
 }
