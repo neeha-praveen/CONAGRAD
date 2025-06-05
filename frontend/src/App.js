@@ -1,42 +1,47 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import StudentAuth from "./components/studentAuth";
-import ExpertAuth from "./components/expertAuth";
-import ExpertDashboard from "./components/ExpertDashboard";
-import StudentDashboard from "./components/StudentDashboard";
-import AssignmentDetails from './components/AssignmentDetails';
-import AssignmentHistory from "./components/AssignmentHistory";
-import Profile from "./components/Profile";
-import Settings from "./components/Settings";
-import Help from "./components/Help";
-// Change this line at the top of your file
-import StudentUpload from "./components/StudentUpload";  // Remove the comment
-import YourWork from "./components/YourWork";
-import ExpertProfile from "./components/ExpertProfile";
 import "./styles/App.css";
 import Services from './components/Services';
 import About from './components/About';
 import Contact from './components/Contact';
 
+// Student Stuff
+import StudentAuth from "./components/studentAuth";
+import StudentDashboard from "./components/StudentDashboard";
+import AssignmentDetails from "./components/AssignmentDetails";
+import AssignmentHistory from "./components/AssignmentHistory";
+import Profile from "./components/Profile";
+import Settings from "./components/Settings";
+import Help from "./components/Help";
+import StudentUpload from "./components/StudentUpload"; 
 
-// import PendingAssignments from "./components/pendingAssignment";
-// // import Navbar from "./components/Navbar";
-// import AssignedAssignments from "./components/AssignedAssignment";
-// import History from "./components/history";
+// Expert Stuff
+import ExpertAuth from "./components/expertAuth";
+import ExpertDashboard from "./ExpertPages/ExpertDashboard/ExpertDashboard";
+import ExpertProfile from "./ExpertPages/ExpertProfile/ExpertProfile";
+import ExpertSettings from "./ExpertPages/ExpertSettings/ExpertSettings";
+import ExpertHistory from "./ExpertPages/ExpertHistory/ExpertHistory";
+import YourWork from "./ExpertPages/YourWork/YourWork";
+
 
 function Home() {
   return (
     <div className="app">
       <header>
-        <Link to="/" className="logo">
-          <h1>CONAGRAD</h1>
-        </Link>
+        <div className="video-container">
+          <video autoPlay loop muted>
+            <source src="/Conagrad..mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        <div className="logo">
+          <img src="/Conagrad.jpg" alt="Platform Logo" />
+        </div>
         <nav>
           <ul>
             <li><Link to="/">Home</Link></li>
-            <li><Link to="/about">About</Link></li>
-            <li><Link to="/services">Services</Link></li>
-            <li><Link to="/contact">Contact</Link></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/services">Services</a></li>
+            <li><a href="/contact">Contact</a></li>
           </ul>
         </nav>
       </header>
@@ -66,15 +71,15 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Landing */}
         <Route path="/" element={<Home />} />
-        <Route path="/student-login" element={<StudentAuth />} />
-        <Route path="/expert-login" element={<ExpertAuth />} />
-        <Route path="/expert-dashboard" element={<ExpertDashboard />} />
         <Route path="/services" element={<Services />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+
+        {/* Student Pages */}
+        <Route path="/student-login" element={<StudentAuth />} />
         <Route path="/student-upload" element={<StudentUpload />} />
-        <Route path="/your-work" element={<YourWork />} />
         <Route path="/assignments" element={<AssignmentDetails />} />
         <Route path="/dashboard" element={<StudentDashboard />} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -83,6 +88,14 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/help" element={<Help />} />
+
+        {/* Expert Pages */}
+        <Route path="/expert-login" element={<ExpertAuth />} />
+        <Route path="/expert-dashboard" element={<ExpertDashboard />} />
+        <Route path="/expert-profile" element={<ExpertProfile />} />
+        <Route path="/expert-settings" element={<ExpertSettings />} />
+        <Route path="/expert-history" element={<ExpertHistory />} />
+        <Route path="/your-work" element={<YourWork />} />
       </Routes>
     </Router>
   );
