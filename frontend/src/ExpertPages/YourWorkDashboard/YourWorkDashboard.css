@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+/* Global styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: linear-gradient(90deg, #e2e2e2, #c9d6ff);
+}
+
+#root {
+  overflow-x: hidden;
+} 
+
+.your-work-dashboard-container {
+  min-height: 100vh;
+  background-color: #f8f9fc;
+  overflow-x: hidden;
+  width: 195vh;
+  padding: 0;
+  padding-top: 250px;
+}

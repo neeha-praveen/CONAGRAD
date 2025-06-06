@@ -1,0 +1,15 @@
+import React from 'react'
+import './YourWorkDashboard.css'
+import ExpertNavbar from "../../components/ExpertNavbar/ExpertNavbar.js";
+import AssignedAssignment from "../../components/Expert/AssignedAssignment/AssignedAssignment.js";
+
+const YourWorkDashboard = () => {
+  return (
+    <div className='your-work-dashboard-container'>
+        <ExpertNavbar/>
+        <AssignedAssignment/>
+    </div>
+  )
+}
+
+export default YourWorkDashboard

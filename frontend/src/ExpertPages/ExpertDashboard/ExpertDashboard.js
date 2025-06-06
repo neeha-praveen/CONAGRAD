@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../ExpertDashboard/ExpertDashboard.css";
-import ExpertNavbar from "../../components/ExpertNavbar/ExpertNavbar.js";
-import AssignedAssignment from "../../components/Expert/AssignedAssignment/AssignedAssignment.js";
+import ExpertNavbar from "../../components/ExpertNavbar/ExpertNavbar.js"
 
 const ExpertDashboard = () => {
   const [assignments, setAssignments] = useState([]);
@@ -147,7 +146,6 @@ const ExpertDashboard = () => {
   return (
     <div className="dashboard-container">
       <ExpertNavbar />
-      <AssignedAssignment/>
       <div className="dashboard-content">
         <div className="dashboard-header-row">
           <h2>Available Assignments</h2>
@@ -165,35 +163,6 @@ const ExpertDashboard = () => {
             </select>
           </div>
         </div>
-        {/* {currentAssignment && (
-          <div className="current-assignment-section">
-            <div className="dashboard-header">
-              <h2>Current Assignment</h2>
-              <span className="status-badge status-assigned">In Progress</span>
-            </div>
-            <div className="current-assignment-card">
-              <h3>{currentAssignment.title}</h3>
-              <div className="assignment-details">
-                <p><i className="bx bx-user"></i> Student: {currentAssignment.studentName}</p>
-                <p><i className="bx bx-book"></i> Subject: {currentAssignment.subject}</p>
-                <p><i className="bx bx-calendar"></i> Due: {new Date(currentAssignment.dueDate).toLocaleDateString()}</p>
-                <p><i className="bx bx-text"></i> Description: {currentAssignment.description}</p>
-                {currentAssignment.fileUrl && (
-                  <div className="file-section">
-                    <i className="bx bx-file"></i>
-                    <span>{currentAssignment.fileName}</span>
-                    <button
-                      className="download-btn"
-                      onClick={() => window.open(`http://localhost:4000${currentAssignment.fileUrl}`, '_blank')}
-                    >
-                      Download
-                    </button> 
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )} */}
 
 {viewedAssignment && (
         <div className="assignment-modal">
