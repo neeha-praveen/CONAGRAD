@@ -109,7 +109,7 @@ router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, r
       return res.status(404).json({ error: 'Assignment not found' });
     }
 
-    assignment.status = 'completed';
+    assignment.status = 'to be reviewed';
     assignment.submissionNote = note;
     assignment.submittedFileUrl = `/uploads/${file.filename}`;
     assignment.submittedFileName = file.originalname;

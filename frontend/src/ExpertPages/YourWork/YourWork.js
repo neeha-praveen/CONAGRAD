@@ -201,7 +201,7 @@ const YourWork = () => {
                   </div>
                 </div>
               </div>
-              <div className={`assignment-status status-${assignment.status?.toLowerCase() || 'pending'}`}>
+              <div className={`assignment-status status-${assignment.status?.toLowerCase().replace(/\s+/g, '-')}`}>
                 {assignment.status || 'Pending'}
               </div>
             </div>
