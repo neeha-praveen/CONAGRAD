@@ -393,31 +393,31 @@ const addTestData = async () => {
 };
 
 // Add this route to get expert profile
-app.get("/expert/profile", async (req, res) => {
-    try {
-        // For now, getting username from token. You'll implement proper auth later
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) {
-            return res.status(401).json({ error: "No token provided" });
-        }
+// app.get("/expert/profile", async (req, res) => {
+//     try {
+//         // For now, getting username from token. You'll implement proper auth later
+//         const token = req.headers.authorization?.split(' ')[1];
+//         if (!token) {
+//             return res.status(401).json({ error: "No token provided" });
+//         }
 
-        // Get expert data from database
-        const expert = await Expert.findById(req.expertId); // You'll get this from auth middleware
-        if (!expert) {
-            return res.status(404).json({ error: "Expert not found" });
-        }
+//         // Get expert data from database
+//         const expert = await Expert.findById(req.expertId); // You'll get this from auth middleware
+//         if (!expert) {
+//             return res.status(404).json({ error: "Expert not found" });
+//         }
 
-        // Return only necessary data
-        res.json({
-            username: expert.username,
-            name: expert.name,
-            email: expert.email
-        });
-    } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.status(500).json({ error: "Failed to fetch profile" });
-    }
-});
+//         // Return only necessary data
+//         res.json({
+//             username: expert.username,
+//             name: expert.name,
+//             email: expert.email
+//         });
+//     } catch (error) {
+//         console.error('Error fetching profile:', error);
+//         res.status(500).json({ error: "Failed to fetch profile" });
+//     }
+// });
 
 // Root route
 app.get('/', (req, res) => {

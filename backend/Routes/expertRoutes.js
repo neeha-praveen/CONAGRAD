@@ -57,13 +57,12 @@ router.post("/login", async (req, res) => {
 });
 
 // Get expert profile
-router.get("/profile", auth, async (req, res) => {
+router.get("/profile/:id", async (req, res) => {
+  console.log("Incoming profile request for:", req.params.id);
   try {
-    const expert = await Expert.findById(req.userId);
-    if (!expert) {
-      return res.status(404).json({ error: "Expert not found" });
-    }
-    
+    const expert = await Expert.findById(req.params.id);
+    if (!expert) return res.status(404).json({ error: "Expert not found" });
+
     res.json({
       username: expert.username,
       name: expert.name,
@@ -73,8 +72,38 @@ router.get("/profile", auth, async (req, res) => {
       education: expert.education,
       experience: expert.experience
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+// Update expert profile by ID
+router.put("/profile/:id", auth, async (req, res) => {
+  try {
+    const expertId = req.params.id;
+    const updateData = req.body;
+
+    const updatedExpert = await Expert.findByIdAndUpdate(expertId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedExpert) {
+      return res.status(404).json({ error: "Expert not found" });
+    }
+
+    res.json({
+      username: updatedExpert.username,
+      name: updatedExpert.name,
+      email: updatedExpert.email,
+      bio: updatedExpert.bio,
+      expertise: updatedExpert.expertise,
+      education: updatedExpert.education,
+      experience: updatedExpert.experience
+    });
+  } catch (err) {
+    console.error("Error updating expert profile:", err);
+    res.status(500).json({ error: "Failed to update profile" });
   }
 });
 

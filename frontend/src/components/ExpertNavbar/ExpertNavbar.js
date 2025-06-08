@@ -7,6 +7,7 @@ const ExpertNavbar = () => {
   const [loggingOut, setLoggingOut] = useState(false);
   const navigate = useNavigate();
   const username = localStorage.getItem('expertUsername') || 'Expert';
+  const expertId = localStorage.getItem('expertId');
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -71,7 +72,7 @@ const ExpertNavbar = () => {
             <div className="profile-dropdown" ref={dropdownRef}>
               <ul className="dropdown-menu">
                 <li>
-                  <Link to="/expert-profile" className="dropdown-item">
+                  <Link to={`/profile/${expertId}`} className="dropdown-item">
                     <i className="bx bx-user"></i>
                     Profile
                   </Link>

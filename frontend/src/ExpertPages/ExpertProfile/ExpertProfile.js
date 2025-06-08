@@ -1,98 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FaUserCircle, FaEnvelope, FaPhone, FaUniversity, FaGraduationCap, FaBriefcase, FaAward } from 'react-icons/fa';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 import './ExpertProfile.css';
 import ExpertNavbar from "../../components/ExpertNavbar/ExpertNavbar.js";
 
 const ExpertProfile = () => {
+  const { expertId } = useParams();
+
   const [isEditing, setIsEditing] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
-  const [userData, setUserData] = useState({
-    username: localStorage.getItem('expertUsername') || 'Expert Username',
-    name: localStorage.getItem('expertName') || 'Expert Name',
-    email: localStorage.getItem('expertEmail') || 'Expert Email',
-    phone: localStorage.getItem('expertPhone') || 'Not Added',
-    education: localStorage.getItem('expertEducation') || 'Not Added',       // Changed from 'xxxx'
-    expertise: JSON.parse(localStorage.getItem('expertExpertise')) || ['General'],
-    bio: localStorage.getItem('expertBio') || 'No bio yet',
-    experience: localStorage.getItem('expertExperience') || ''
-  });
-  const [editedData, setEditedData] = useState({ ...userData });
+  const [userData, setUserData] = useState(null);
+  const [editedData, setEditedData] = useState(null);
   const [newExpertise, setNewExpertise] = useState('');
-  const [predefinedExpertise] = useState([
-    'Biology',
-    'Chemistry',
-    'Mathematics',
-    'Computer Science',
-    'Development',
-    'Physics',
-    'Engineering',
-    'Medicine',
-    'Law',
-    'Business',
-    'Arts',
-    'Humanities',
-    'Social Sciences',
-    'Other'
-  ]);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  useEffect(() => {
-    const savedName = localStorage.getItem('name');
-    const savedEmail = localStorage.getItem('email');
-    
-    if (savedName && savedEmail) {
-      setUserData(prev => ({
-        ...prev,
-        name: savedName,
-        email: savedEmail
-      }));
-      setEditedData(prev => ({
-        ...prev,
-        name: savedName,
-        email: savedEmail
-      }));
-    }
-  }, []);
+  const predefinedExpertise = [
+    'Biology', 'Chemistry', 'Mathematics', 'Computer Science', 'Development',
+    'Physics', 'Engineering', 'Medicine', 'Law', 'Business', 'Arts',
+    'Humanities', 'Social Sciences', 'Other'
+  ];
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setProfileImage(file);
-      setPreviewImage(URL.createObjectURL(file));
-    }
+  useEffect(() => {
+    const fetchExpertData = async () => {
+      try {
+        const response = await axios.get(`/api/expert/profile/${expertId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("expertToken")}`
+          }
+        });
+        setUserData(response.data);
+        setEditedData(response.data);
+      } catch (error) {
+        console.error('Error fetching expert data:', error);
+      }
+    };
+
+    fetchExpertData();
+  }, [expertId]);
+const handleEdit = () => {
+    setIsEditing(true);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditedData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
+    setEditedData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
     try {
-      // TODO: Add API call here to send editedData to your backend
-      // Example: const response = await fetch('/api/expert/profile', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(editedData)
-      // });
-      // const result = await response.json();
-      // Handle API response (e.g., check for errors)
+      const response = await axios.put(`/api/expert/profile/${expertId}`, editedData, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem("expertToken")}`
+        }
+      });
 
-      // Update local state and localStorage after successful API call (or for localStorage only)
-      setUserData(editedData);
-      localStorage.setItem('expertName', editedData.name);
-      localStorage.setItem('expertBio', editedData.bio);
-      localStorage.setItem('expertExpertise', JSON.stringify(editedData.expertise));
-
+      setUserData(response.data);
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       setIsEditing(false);
     } catch (error) {
@@ -103,17 +65,14 @@ const ExpertProfile = () => {
 
   const handleAddExpertise = () => {
     if (newExpertise.trim() !== '') {
-      if (predefinedExpertise.includes(newExpertise.trim())) {
-        setEditedData(prev => ({
-          ...prev,
-          expertise: [...prev.expertise, newExpertise.trim()]
-        }));
-      } else {
-        setEditedData(prev => ({
-          ...prev,
-          expertise: [...prev.expertise, `Custom: ${newExpertise.trim()}`]
-        }));
-      }
+      const expertiseValue = predefinedExpertise.includes(newExpertise.trim())
+        ? newExpertise.trim()
+        : `Custom: ${newExpertise.trim()}`;
+
+      setEditedData(prev => ({
+        ...prev,
+        expertise: [...prev.expertise, expertiseValue]
+      }));
       setNewExpertise('');
     }
   };
@@ -124,6 +83,9 @@ const ExpertProfile = () => {
       expertise: prev.expertise.filter((_, i) => i !== index)
     }));
   };
+
+  if (!userData) return <div>Loading...</div>;
+
 
   return (
     <div className="expert-profile-container">

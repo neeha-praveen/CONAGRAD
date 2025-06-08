@@ -93,7 +93,7 @@ function App() {
         {/* Expert Pages */}
         <Route path="/expert-login" element={<ExpertAuth />} />
         <Route path="/expert-dashboard" element={<ExpertDashboard />} />
-        <Route path="/expert-profile" element={<ExpertProfile />} />
+        <Route path="/profile/:expertId" element={<ExpertProfile />} />
         <Route path="/expert-settings" element={<ExpertSettings />} />
         <Route path="/expert-history" element={<ExpertHistory />} />
         <Route path="/your-work/:assignmentId" element={<YourWork />} />
