@@ -35,7 +35,13 @@ const expertSchema = new mongoose.Schema({
       date: {
         type: Date,
         default: Date.now
-      }
+      },
+      notifications: {
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: false },
+        sms: { type: Boolean, default: false }
+      },
+      appearance: { type: String, default: 'light' },
     });
 
 module.exports = mongoose.model('experts', expertSchema); 

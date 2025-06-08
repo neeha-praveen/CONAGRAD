@@ -107,6 +107,50 @@ router.put("/profile/:id", auth, async (req, res) => {
   }
 });
 
+// PUT /api/expert/settings/:id
+router.put('/settings/:id', auth, async (req, res) => {
+  try {
+    const expertId = req.params.id;
+    const updates = req.body;
+
+    const updatedExpert = await Expert.findByIdAndUpdate(
+      expertId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedExpert) {
+      return res.status(404).json({ error: 'Expert not found' });
+    }
+
+    res.json({ message: 'Settings updated successfully', settings: updatedExpert });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}); 
+
+router.post('/change-password/:id', auth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const expertId = req.params.id;
+
+  try {
+    const expert = await Expert.findById(expertId);
+    if (!expert) return res.status(404).json({ error: 'Expert not found' });
+
+    if (expert.password !== currentPassword) {
+      return res.status(401).json({ error: 'Incorrect current password' });
+    }
+
+    expert.password = newPassword;
+    await expert.save();
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Password change error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Get all assigned assignments for an expert
 router.get('/assigned-assignments', auth, async (req, res) => {
   try {
