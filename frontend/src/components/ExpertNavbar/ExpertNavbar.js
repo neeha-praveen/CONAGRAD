@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import './ExpertNavbar.css';
 
 const ExpertNavbar = () => {
@@ -38,26 +38,26 @@ const ExpertNavbar = () => {
   return (
     <nav className="expert-navbar">
       <div className="navbar-left">
-        <Link to="/" className="navbar-logo">
+        <NavLink to="/" className="navbar-logo">
           <img src="/Conagrad.jpg" alt="Logo" />
-        </Link>
+        </NavLink>
       </div>
 
       <div className="navbar-right">
-        <Link to="/expert-dashboard" className="nav-link">
+        <NavLink to="/expert-dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <i className="bx bx-home"></i>
           Home
-        </Link>
+        </NavLink>
 
-        <Link to="/expert-history" className="nav-link">
+        <NavLink to="/expert-history" className="nav-link">
           <i className="bx bx-history"></i>
           History
-        </Link>
+        </NavLink>
 
-        <Link to="/your-work" className="nav-link">
+        <NavLink to="/your-work" className="nav-link">
           <i className="bx bx-briefcase"></i>
           Your Work
-        </Link>
+        </NavLink>
 
         <div className="expertprofile-container">
           <div 
@@ -72,22 +72,22 @@ const ExpertNavbar = () => {
             <div className="profile-dropdown" ref={dropdownRef}>
               <ul className="dropdown-menu">
                 <li>
-                  <Link to={`/profile/${expertId}`} className="dropdown-item">
+                  <NavLink to={`/profile/${expertId}`} className="dropdown-item">
                     <i className="bx bx-user"></i>
                     Profile
-                  </Link>
+                  </NavLink>
                 </li>
                 <li>
-                  <Link to="/expert-settings" className="dropdown-item">
+                  <NavLink to="/expert-settings" className="dropdown-item">
                     <i className="bx bx-cog"></i>
                     Settings
-                  </Link>
+                  </NavLink>
                 </li>
                 <li>
-                  <Link to="/help" className="dropdown-item">
+                  <NavLink to="/help" className="dropdown-item">
                     <i className="bx bx-help-circle"></i>
                     Help
-                  </Link>
+                  </NavLink>
                 </li>
                 <li className="dropdown-divider"></li>
                 <li>
