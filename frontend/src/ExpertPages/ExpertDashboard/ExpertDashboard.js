@@ -18,8 +18,13 @@ const ExpertDashboard = () => {
   const [showBidForm, setShowBidForm] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [bidMessage, setBidMessage] = useState('');
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   useEffect(() => {
+    const showPopup = localStorage.getItem("showCompleteProfilePopup");
+    if (showPopup === 'true') {
+      setShowProfilePopup(true);
+    }
     const token = localStorage.getItem('expertToken');
     if (!token) {
       navigate('/expert-login');
@@ -103,14 +108,14 @@ const ExpertDashboard = () => {
       const formData = new FormData();
       formData.append('file', submissionFile);
       formData.append('assignmentId', currentAssignment._id);
-  
+
       await axios.post('http://localhost:4000/submit-assignment', formData, {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
-  
+
       setCurrentAssignment(null);
       fetchAssignments();
       setActiveTab('history');
@@ -146,12 +151,36 @@ const ExpertDashboard = () => {
   return (
     <div className="dashboard-container">
       <ExpertNavbar />
+
+      {showProfilePopup && (
+        <div
+          className="complete-profile-popup"
+          onClick={() => {
+            const id = localStorage.getItem("expertId");
+            if (id) navigate(`/profile/${id}`);
+            localStorage.setItem("showCompleteProfilePopup", "false");
+          }}
+        >
+          <span className="msg">Complete your profile to get started</span>
+          <button
+            className="popup-close-btn"
+            onClick={(e) => {
+              e.stopPropagation(); // prevent outer div's onClick
+              setShowProfilePopup(false);
+              localStorage.setItem("showCompleteProfilePopup", "false");
+            }}
+          >
+            <span className="x">x</span>
+          </button>
+        </div>
+      )}
+
       <div className="dashboard-content">
         <div className="dashboard-header-row">
           <h2>Available Assignments</h2>
           <div className="filter-section">
-            <select 
-              value={subjectFilter} 
+            <select
+              value={subjectFilter}
               onChange={(e) => setSubjectFilter(e.target.value)}
               className="subject-filter"
             >
@@ -164,95 +193,95 @@ const ExpertDashboard = () => {
           </div>
         </div>
 
-{viewedAssignment && (
-        <div className="assignment-modal">
-          <div className="assignment-modal-content">
-            <button className="close-btn" onClick={() => {
-              setViewedAssignment(null);
-              setShowBidForm(false);
-              setBidAmount('');
-              setBidMessage('');
-              setBidError(null);
-            }}>×</button>
-            <h2>{viewedAssignment.title}</h2>
-            <div className="assignment-details">
-              <p><i className="bx bx-user"></i> Student: {viewedAssignment.studentName || 'Anonymous'}</p>
-              <p><i className="bx bx-book"></i> Subject: {viewedAssignment.subject || 'Not specified'}</p>
-              <p><i className="bx bx-calendar"></i> Due: {viewedAssignment.dueDate ? new Date(viewedAssignment.dueDate).toLocaleDateString() : 'No deadline'}</p>
-              <p><i className="bx bx-text"></i> Description: {viewedAssignment.description}</p>
-              {viewedAssignment.fileUrl && (
-                <div className="file-section">
-                  <i className="bx bx-file"></i>
-                  <span className="file-name-dark">{viewedAssignment.fileName}</span>
+        {viewedAssignment && (
+          <div className="assignment-modal">
+            <div className="assignment-modal-content">
+              <button className="close-btn" onClick={() => {
+                setViewedAssignment(null);
+                setShowBidForm(false);
+                setBidAmount('');
+                setBidMessage('');
+                setBidError(null);
+              }}>×</button>
+              <h2>{viewedAssignment.title}</h2>
+              <div className="assignment-details">
+                <p><i className="bx bx-user"></i> Student: {viewedAssignment.studentName || 'Anonymous'}</p>
+                <p><i className="bx bx-book"></i> Subject: {viewedAssignment.subject || 'Not specified'}</p>
+                <p><i className="bx bx-calendar"></i> Due: {viewedAssignment.dueDate ? new Date(viewedAssignment.dueDate).toLocaleDateString() : 'No deadline'}</p>
+                <p><i className="bx bx-text"></i> Description: {viewedAssignment.description}</p>
+                {viewedAssignment.fileUrl && (
+                  <div className="file-section">
+                    <i className="bx bx-file"></i>
+                    <span className="file-name-dark">{viewedAssignment.fileName}</span>
+                    <button
+                      className="download-btn"
+                      onClick={() => window.open(`http://localhost:4000${viewedAssignment.fileUrl}`, '_blank')}
+                    >
+                      View
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="modal-actions">
+                {!showBidForm ? (
                   <button
-                    className="download-btn"
-                    onClick={() => window.open(`http://localhost:4000${viewedAssignment.fileUrl}`, '_blank')}
+                    className="bid-btn"
+                    onClick={() => setShowBidForm(true)}
                   >
-                    View
+                    Place Bid
                   </button>
-                </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              {!showBidForm ? (
-                <button 
-                  className="bid-btn"
-                  onClick={() => setShowBidForm(true)}
-                >
-                  Place Bid
-                </button>
-              ) : (
-                <div className="bid-form">
-                  <div className="bid-input-group">
-                    <label>Bid Amount ($)</label>
-                    <input
-                      type="number"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      placeholder="Enter your bid amount"
-                      min="0"
-                      step="0.01"
-                    />
+                ) : (
+                  <div className="bid-form">
+                    <div className="bid-input-group">
+                      <label>Bid Amount ($)</label>
+                      <input
+                        type="number"
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        placeholder="Enter your bid amount"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    <div className="bid-input-group">
+                      <label>Message to Student</label>
+                      <textarea
+                        value={bidMessage}
+                        onChange={(e) => setBidMessage(e.target.value)}
+                        placeholder="Enter a message for the student"
+                        rows="4"
+                      />
+                    </div>
+                    {bidError && (
+                      <div className="bid-error-message">{bidError}</div>
+                    )}
+                    <div className="bid-form-actions">
+                      <button
+                        className="cancel-btn"
+                        onClick={() => {
+                          setShowBidForm(false);
+                          setBidAmount('');
+                          setBidMessage('');
+                          setBidError(null);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="submit-bid-btn"
+                        onClick={handleSubmitBid}
+                        disabled={!bidAmount || !bidMessage}
+                      >
+                        Send Bid
+                      </button>
+                    </div>
                   </div>
-                  <div className="bid-input-group">
-                    <label>Message to Student</label>
-                    <textarea
-                      value={bidMessage}
-                      onChange={(e) => setBidMessage(e.target.value)}
-                      placeholder="Enter a message for the student"
-                      rows="4"
-                    />
-                  </div>
-                  {bidError && (
-                    <div className="bid-error-message">{bidError}</div>
-                  )}
-                  <div className="bid-form-actions">
-                    <button 
-                      className="cancel-btn"
-                      onClick={() => {
-                        setShowBidForm(false);
-                        setBidAmount('');
-                        setBidMessage('');
-                        setBidError(null);
-                      }}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      className="submit-bid-btn"
-                      onClick={handleSubmitBid}
-                      disabled={!bidAmount || !bidMessage}
-                    >
-                      Send Bid
-                    </button>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
+        )}
+
         {loading ? (
           <div className="loading-spinner"></div>
         ) : error ? (
@@ -271,8 +300,8 @@ const ExpertDashboard = () => {
           <>
             <div className="assignments-grid">
               {assignments
-                .filter(assignment => 
-                  subjectFilter === 'all' || 
+                .filter(assignment =>
+                  subjectFilter === 'all' ||
                   (assignment.subject || 'Not specified') === subjectFilter
                 )
                 .map((assignment) => (

@@ -509,3 +509,54 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+.complete-profile-popup {
+  background: #fff;
+  padding: 20px 40px;
+  min-width: 300px;
+  position: fixed;
+  right: 20px;
+  top: 80px;
+  border-radius: 4px;
+  border-left: 8px solid #5271FF;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.complete-profile-popup .msg {
+  color: #2c3e50;
+  font-size: 14px;
+  padding: 0 20px;  
+}
+
+.popup-close-btn {
+  background: #fff;
+  padding: 18px 16px;
+  position: absolute;
+  right:0px;
+  top:50%;
+  transform: translateY(-50%);
+  border: none;
+  overflow: hidden;
+}
+
+.popup-close-btn .x{
+  color:#2c3e50;
+  font-size:16px; 
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.popup-actions button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-weight: bold;
+}
+

@@ -54,6 +54,8 @@ export default function ExpertAuth() {
         localStorage.setItem('expertName', response.data.expert.name);
         localStorage.setItem('expertEmail', response.data.expert.email);
         localStorage.setItem('expertId', response.data.expert.id);
+
+        localStorage.setItem('showCompleteProfilePopup', 'true');
         
         // Set default authorization header for future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
@@ -122,7 +124,7 @@ export default function ExpertAuth() {
         username: registerData.username
       });
 
-      const response = await axios.post("/expert/register", {
+      const response = await axios.post("api/expert/register", {
         name: registerData.name.trim(),
         email: registerData.email.trim(),
         username: registerData.username.trim(),
