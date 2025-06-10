@@ -29,9 +29,9 @@ const ExpertSettings = () => {
   const handleAppearanceToggle = () => {
     setAppearance(prev => (prev === 'light' ? 'dark' : 'light'));
   };
-  const handleLanguageChange = (e) => {
-    setLanguage(e.target.value);
-  };
+  // const handleLanguageChange = (e) => {
+  //   setLanguage(e.target.value);
+  // };
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswords(prev => ({ ...prev, [name]: value }));
