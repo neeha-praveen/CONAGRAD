@@ -29,7 +29,7 @@ const AssignmentSchema = new mongoose.Schema({
     fileSize: Number,
     status: {
         type: String,
-        enum: ['pending', 'completed', 'assigned'],
+        enum: ['pending', 'completed', 'assigned','to be reviewed'],
         default: 'pending'
     },
     submittedDate: {

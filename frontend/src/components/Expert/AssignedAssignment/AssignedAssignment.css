@@ -5,7 +5,7 @@
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
-    /* margin-top: 20px; */
+    margin-top: 1300px; 
 }
 
 .assigned-header {
@@ -185,7 +185,13 @@
     box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
 }
 
-.status-assigned {
+.status-to-be-reviewed {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+}
+
+.status-in_progress {
     background: linear-gradient(135deg, #f39c12, #e67e22);
     color: white;
     box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);

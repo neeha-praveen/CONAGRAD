@@ -12,7 +12,7 @@ router.post("/register", async (req, res) => {
     const { name, email, username, password } = req.body;
     const newExpert = new Expert({ name, email, username, password });
     await newExpert.save();
-    res.status(201).json({ 
+    res.status(201).json({
       message: "Registration successful!",
       redirectTo: "/expert-login"
     });
@@ -29,14 +29,14 @@ router.post("/login", async (req, res) => {
     if (!expert) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-    
+
     const token = jwt.sign(
       { userId: expert._id, userType: 'expert' },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       message: "Login successful!",
       token,
       expert: {
@@ -128,7 +128,7 @@ router.put('/settings/:id', auth, async (req, res) => {
     console.error('Error updating settings:', error);
     res.status(500).json({ error: 'Server error' });
   }
-}); 
+});
 
 router.post('/change-password/:id', auth, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
@@ -158,7 +158,7 @@ router.get('/assigned-assignments', auth, async (req, res) => {
     const assignments = await Assignment.find({ expertId })
       .populate('studentId', 'username')
       .select('title description dueDate status fileUrl fileName studentId');
-    
+
     res.json(assignments);
   } catch (err) {
     console.error('Error fetching assigned assignments:', err);
@@ -172,12 +172,17 @@ router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, r
     const assignmentId = req.params.id;
     const note = req.body.note;
     const file = req.file;
+    console.log('➡️ SUBMIT HIT');
+    console.log('➡️ Assignment ID:', req.params.id);
+    console.log('➡️ Note:', req.body.note);
+    console.log('➡️ File:', req.file);
 
     if (!file) {
       return res.status(400).json({ error: 'File is required' });
     }
 
     const assignment = await Assignment.findById(assignmentId);
+    console.log('➡️ Assignment found:', assignment);
     if (!assignment) {
       return res.status(404).json({ error: 'Assignment not found' });
     }

@@ -115,7 +115,7 @@ const AssignedAssignment = () => {
                   <Eye className="button-icon" />
                   <span>VIEW</span>
                 </button>
-                <span className={`status-badge status-${assignment.status?.toLowerCase() || 'pending'}`}>
+                <span className={`status-badge status-${assignment.status?.toLowerCase().replace(/\s+/g, '-') || 'pending'}`}>
                   {assignment.status || 'Pending'}
                 </span>
               </div>
