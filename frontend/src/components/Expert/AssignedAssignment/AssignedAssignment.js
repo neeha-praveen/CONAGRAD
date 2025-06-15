@@ -93,7 +93,9 @@ const AssignedAssignment = () => {
         </div>
       ) : (
         <div className='assignment-grid'>
-          {assignments.map((assignment) => (
+          {assignments
+            .filter((assignment) => assignment.status?.toLowerCase() !== 'completed')
+            .map((assignment) => (
             <div key={assignment._id} className='assigned-assignment-card'>
               <div className="assignment-header">
                 <div className="assignment-title-section">
