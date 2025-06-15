@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './YourWork.css';
-import ExpertNavbar from '../../components/ExpertNavbar/ExpertNavbar';
+import ExpertNavbar from '../../components/Expert/ExpertNavbar/ExpertNavbar';
 import {
   Calendar, CheckCircle, Clock, File, FileText, Send,
   Upload, User, X

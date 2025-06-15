@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../ExpertDashboard/ExpertDashboard.css";
-import ExpertNavbar from "../../components/ExpertNavbar/ExpertNavbar.js"
+import ExpertNavbar from "../../components/Expert/ExpertNavbar/ExpertNavbar.js"
 
 const ExpertDashboard = () => {
   const [assignments, setAssignments] = useState([]);

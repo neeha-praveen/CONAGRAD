@@ -1,6 +1,6 @@
 import React from 'react'
 import './YourWorkDashboard.css'
-import ExpertNavbar from "../../components/ExpertNavbar/ExpertNavbar.js";
+import ExpertNavbar from "../../components/Expert/ExpertNavbar/ExpertNavbar.js";
 import AssignedAssignment from "../../components/Expert/AssignedAssignment/AssignedAssignment.js";
 
 const YourWorkDashboard = () => {

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import './ExpertNavbar.css';
+import './/ExpertNavbar.css';
 
 const ExpertNavbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
