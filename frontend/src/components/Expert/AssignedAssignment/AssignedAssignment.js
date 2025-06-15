@@ -48,7 +48,7 @@ const AssignedAssignment = () => {
     const due = new Date(dueDate);
     const diffTime = due - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return "Overdue";
     } else if (diffDays === 0) {
@@ -92,60 +92,62 @@ const AssignedAssignment = () => {
           <p>No assignments assigned to you yet.</p>
         </div>
       ) : (
-        assignments.map((assignment) => (
-          <div key={assignment._id} className='assigned-assignment-card'>
-            <div className="assignment-header">
-              <div className="assignment-title-section">
-                <div className="assignment-icon">
-                  <FileText className="icon" />
-                </div>
-                <div className="title-info">
-                  <h3>{assignment.title}</h3>
-                  <div className="student-info">
-                    <User className="user-icon" />
-                    <span>{assignment.studentId?.username || 'Unknown Student'}</span>
+        <div className='assignment-grid'>
+          {assignments.map((assignment) => (
+            <div key={assignment._id} className='assigned-assignment-card'>
+              <div className="assignment-header">
+                <div className="assignment-title-section">
+                  <div className="assignment-icon">
+                    <FileText className="icon" />
+                  </div>
+                  <div className="title-info">
+                    <h3>{assignment.title}</h3>
+                    <div className="student-info">
+                      <User className="user-icon" />
+                      <span>{assignment.studentId?.username || 'Unknown Student'}</span>
+                    </div>
                   </div>
                 </div>
+                <div className="header-actions">
+                  <button
+                    className='view-button'
+                    onClick={() => handleViewClick(assignment._id)}
+                  >
+                    <Eye className="button-icon" />
+                    <span>VIEW</span>
+                  </button>
+                  <span className={`status-badge status-${assignment.status?.toLowerCase().replace(/\s+/g, '-') || 'pending'}`}>
+                    {assignment.status || 'Pending'}
+                  </span>
+                </div>
               </div>
-              <div className="header-actions">
-                <button 
-                  className='view-button' 
-                  onClick={() => handleViewClick(assignment._id)}
-                >
-                  <Eye className="button-icon" />
-                  <span>VIEW</span>
-                </button>
-                <span className={`status-badge status-${assignment.status?.toLowerCase().replace(/\s+/g, '-') || 'pending'}`}>
-                  {assignment.status || 'Pending'}
-                </span>
+              <div className='assign-details'>
+                <div className="detail-item description-item">
+                  <div className="detail-content">
+                    <FileText className="detail-icon" />
+                    <div>
+                      <h4>Description</h4>
+                      <p>{assignment.description || 'No description provided'}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="detail-item due-date-item">
+                  <div className="detail-content">
+                    <Calendar className="detail-icon" />
+                    <div>
+                      <h4>Due Date</h4>
+                      <p>{new Date(assignment.dueDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="time-remaining">
+                    <Clock className="clock-icon" />
+                    <span>{calculateTimeRemaining(assignment.dueDate)}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className='assign-details'>
-              <div className="detail-item description-item">
-                <div className="detail-content">
-                  <FileText className="detail-icon" />
-                  <div>
-                    <h4>Description</h4>
-                    <p>{assignment.description || 'No description provided'}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="detail-item due-date-item">
-                <div className="detail-content">
-                  <Calendar className="detail-icon" />
-                  <div>
-                    <h4>Due Date</h4>
-                    <p>{new Date(assignment.dueDate).toLocaleDateString()}</p>
-                  </div>
-                </div>
-                <div className="time-remaining">
-                  <Clock className="clock-icon" />
-                  <span>{calculateTimeRemaining(assignment.dueDate)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   );
