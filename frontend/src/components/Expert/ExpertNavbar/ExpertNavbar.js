@@ -78,6 +78,12 @@ const ExpertNavbar = () => {
                   </NavLink>
                 </li>
                 <li>
+                  <NavLink to="/bids" className="dropdown-item">
+                    < i class='bx  bx-archive'  ></i> 
+                    Your Bids
+                  </NavLink>
+                </li>
+                <li>
                   <NavLink to="/expert-settings" className="dropdown-item">
                     <i className="bx bx-cog"></i>
                     Settings
@@ -89,7 +95,6 @@ const ExpertNavbar = () => {
                     Help
                   </NavLink>
                 </li>
-                <li className="dropdown-divider"></li>
                 <li>
                   <button onClick={handleLogout} className="dropdown-item" disabled={loggingOut}>
                     <i className="bx bx-log-out"></i>
