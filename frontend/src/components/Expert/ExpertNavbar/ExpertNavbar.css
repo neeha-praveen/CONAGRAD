@@ -112,7 +112,7 @@
 .expert-navbar .dropdown-item {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.5rem;
   padding: 6px 14px;
   color: #333;
   text-decoration: none;
