@@ -15,15 +15,15 @@ body {
 
 #root {
   overflow-x: hidden;
+  width: 100%;
 } 
 
 .dashboard-container {
   min-height: 100vh;
   background-color: #f8f9fc;
   overflow-x: hidden;
-  width: 195vh;
   padding: 0;
-  padding-top: 250px;
+  padding-top: 20px;
 }
 
 .dashboard-content {
@@ -32,6 +32,7 @@ body {
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+  padding-top:60px;
 }
 
 .dashboard-header-row {

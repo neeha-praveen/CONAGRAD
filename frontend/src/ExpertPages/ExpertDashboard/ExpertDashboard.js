@@ -152,7 +152,7 @@ const ExpertDashboard = () => {
     <div className="dashboard-container">
       <ExpertNavbar />
 
-      {showProfilePopup && (
+      {/* {showProfilePopup && (
         <div
           className="complete-profile-popup"
           onClick={() => {
@@ -173,7 +173,7 @@ const ExpertDashboard = () => {
             <span className="x">x</span>
           </button>
         </div>
-      )}
+      )} */}
 
       <div className="dashboard-content">
         <div className="dashboard-header-row">
