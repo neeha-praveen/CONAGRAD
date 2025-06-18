@@ -22,6 +22,7 @@ import ExpertSettings from "./ExpertPages/ExpertSettings/ExpertSettings";
 import ExpertHistory from "./ExpertPages/ExpertHistory/ExpertHistory";
 import YourWork from "./ExpertPages/YourWork/YourWork";
 import YourWorkDashboard from "./ExpertPages/YourWorkDashboard/YourWorkDashboard";
+import YourBids from "./ExpertPages/YourBids/YourBids";
 
 
 function Home() {
@@ -98,6 +99,7 @@ function App() {
         <Route path="/expert-history" element={<ExpertHistory />} />
         <Route path="/your-work/:assignmentId" element={<YourWork />} />
         <Route path="/your-work" element={<YourWorkDashboard />} />
+        <Route path="/bids" element={<YourBids/>}/>
       </Routes>
     </Router>
   );
