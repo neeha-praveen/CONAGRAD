@@ -202,4 +202,52 @@ router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, r
   }
 });
 
+// Get bids submitted by expert
+router.get('/bids', auth, async (req, res) => {
+  try {
+    const expertId = req.userId || req.user.id;
+
+    const assignmentsWithBids = await Assignment.find({
+      'bids.expertId': expertId
+    }).populate('studentId', 'name username');
+
+    const expertBids = [];
+
+    assignmentsWithBids.forEach(assignment => {
+      const expertBidsInAssignment = assignment.bids.filter(
+        bid => bid.expertId.toString() === expertId
+      );
+
+      expertBidsInAssignment.forEach(bid => {
+        expertBids.push({
+          bidId: bid._id,
+          assignmentId: assignment._id,
+          assignmentTitle: assignment.title,
+          assignmentDescription: assignment.description,
+          assignmentSubject: assignment.subject,
+          assignmentDueDate: assignment.dueDate,
+          studentName: assignment.studentName || assignment.studentId?.name,
+          studentUsername: assignment.studentId?.username,
+          bidAmount: bid.amount,
+          bidMessage: bid.message,
+          bidTimestamp: bid.timestamp,
+          assignmentStatus: assignment.status,
+          bidStatus: assignment.expertId && assignment.expertId.toString() === expertId
+            ? 'accepted'
+            : assignment.status === 'assigned'
+              ? 'not accepted'
+              : 'pending'
+        });
+      });
+    });
+
+    expertBids.sort((a, b) => new Date(b.bidTimestamp) - new Date(a.bidTimestamp));
+
+    res.json(expertBids);
+  } catch (error) {
+    console.error('Error fetching expert bids:', error);
+    res.status(500).json({ error: 'Failed to fetch bids' });
+  }
+});
+
 module.exports = router;
