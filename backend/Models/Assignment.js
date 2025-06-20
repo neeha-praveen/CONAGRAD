@@ -20,32 +20,10 @@ const BidSchema = new mongoose.Schema({
     }
 });
 
-const AssignmentSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    description: String,
-    fileName: String,
-    fileUrl: String,
-    fileType: String,
-    fileSize: Number,
-    status: {
-        type: String,
-        enum: ['pending', 'completed', 'assigned','to be reviewed'],
-        default: 'pending'
-    },
-    submittedDate: {
-        type: Date,
-        default: Date.now
-    },
+const SubmissionSchema = new mongoose.Schema({
     expertId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'experts'
-    },
-    dueDate: Date,
-    subject: String,
-    studentName: String,
-    studentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'students',
+        ref: 'experts',
         required: true
     },
     expertDocument: {
@@ -60,11 +38,38 @@ const AssignmentSchema = new mongoose.Schema({
     },
     expertMessage: String,
     completionDate: Date,
+    submittedDate: {
+        type: Date,
+        default: Date.now
+    },
+})
+
+const AssignmentSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    description: String,
+    fileName: String,
+    fileUrl: String,
+    fileType: String,
+    fileSize: Number,
+    status: {
+        type: String,
+        enum: ['pending', 'completed', 'assigned','to be reviewed'],
+        default: 'pending'
+    },
+    expertId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'experts'
+    },
+    dueDate: Date,
+    subject: String,
+    studentName: String,
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'students',
+        required: true
+    },
     bids: [BidSchema],
-    submissionNote: String,
-    submittedFileUrl: String,
-    submittedFileName: String,
-    submittedAt: Date
+    submission: [SubmissionSchema]
 });
 
 module.exports = mongoose.model('Assignment', AssignmentSchema);
