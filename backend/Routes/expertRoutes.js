@@ -232,6 +232,8 @@ router.get('/bids', auth, async (req, res) => {
           bidMessage: bid.message,
           bidTimestamp: bid.timestamp,
           assignmentStatus: assignment.status,
+          fileName: assignment.fileName,
+          fileUrl: assignment.fileUrl,
           bidStatus: assignment.expertId && assignment.expertId.toString() === expertId
             ? 'accepted'
             : assignment.status === 'assigned'
@@ -249,5 +251,33 @@ router.get('/bids', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch bids' });
   }
 });
+
+router.put('/bids/:id', auth, async (req, res) => {
+  try {
+    const expertId = req.userId;
+    const { bidAmount, bidMessage } = req.body;
+
+    const assignment = await Assignment.findOneAndUpdate(
+      { 'bids._id': req.params.id, 'bids.expertId': expertId },
+      {
+        $set: {
+          'bids.$.amount': bidAmount,
+          'bids.$.message': bidMessage,
+        }
+      },
+      { new: true }
+    );
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Bid not found' });
+    }
+
+    res.json({ message: 'Bid updated successfully', assignment });
+  } catch (err) {
+    console.error('Update bid error:', err);
+    res.status(500).json({ error: 'Failed to update bid' });
+  }
+});
+
 
 module.exports = router;

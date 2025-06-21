@@ -183,6 +183,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  width: auto;
 }
 
 .bid-status-pending,
@@ -204,32 +205,30 @@
   text-decoration: none;
   box-sizing: border-box;
   white-space: nowrap;
-  width: 120px;
+  width: 120px; 
 }
 
-.view-button {
+.bid-view-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border: none;
-  border-radius: 16px;
+  border-radius: 50px;
   font-weight: 600;
-  font-size: 0.7rem;
+  font-size: 0.75rem; 
   cursor: pointer;
   transition: all 0.2s ease;
-  width: fit-content;
-  min-width: 0;
-  height: 30px;
-  text-decoration: none;
-  box-sizing: border-box;
+  min-width: 80px;
+  width: 120px;
+  height: 32px;
   background: linear-gradient(135deg, #5271FF, #3498db);
   color: white;
   box-shadow: 0 2px 8px rgba(82, 113, 255, 0.3);
 }
 
-.view-button:hover {
+.bid-view-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 3px 12px rgba(82, 113, 255, 0.4);
   background: linear-gradient(135deg, #4a67ff, #2980b9);
@@ -323,11 +322,16 @@
   word-break: break-word;
 }
 
+.bid-modal-header {
+  display: flex;
+  gap:12px;
+}
+
 .bid-modal-content .student-info-bid {
   padding-bottom:10px;
 }
 
-.bid-detail-section {
+.bid-detail-section, .assignment-detail-section {
   display: flex;
   flex-direction: column;
   background: white;
@@ -338,4 +342,163 @@
   overflow: hidden;
   padding-top: 10px;
   padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.bid-detail-header {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.2rem;
+  justify-content: space-between;
+}
+
+.assignment-detail-header {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  justify-content: space-between;
+}
+
+.bid-modal h3{
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+
+.bid-edit-btn {
+  background: linear-gradient(135deg, #3498db, #5271FF);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+  box-shadow: 0 2px 8px rgba(82, 113, 255, 0.3);
+}
+
+.bid-edit-btn .bid-edit {
+  width: 16px;
+  height: 16px;
+}
+
+.bid-edit-btn:hover {
+  background: linear-gradient(135deg, #2980b9, #4a67ff);
+  box-shadow: 0 3px 10px rgba(82, 113, 255, 0.4);
+}
+
+
+.bid-detail-content, .assignment-detail-content {
+  margin-bottom: 0.5rem;
+}
+
+.assignment-detail-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  font-size: 15px;
+  color: #444;
+}
+
+.assignment-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.assignment-field strong {
+  color: #2c3e50;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.assignment-field i,
+.assignment-field svg {
+  margin-right: 4px;
+  color: #3498db;
+  flex-shrink: 0;
+}
+
+.assignment-file-link a {
+  color: #5271FF;
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.assignment-file-link a:hover {
+  color: #2c3e50;
+}
+
+label,p, .readonly-value {
+  color:#4a5568;
+  font-size: 15px;
+}
+
+.bid-msg-input {
+  color:#4a5568;
+}
+
+.bid-input-field,
+.bid-textarea-field {
+  background: #f0f6ff;
+  border: 1px solid #bbcdf1;
+  border-radius: 6px;
+  color: #333;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.6rem 1rem;
+  width: 100%;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+  resize: none;
+}
+
+.bid-input-field:read-only,
+.bid-textarea-field:read-only {
+  background: #f0f6ff;
+  border: 1px solid #bbcdf1;
+  cursor: default;
+}
+
+.auto-resize {
+  overflow: hidden;
+  resize: none;
+  min-height: 40px;
+  line-height: 1.4;
+  font-size: 1rem;
+}
+
+.form-bid-content.msg {
+  margin-top: 8px;
+}
+
+/* Optional: space between label and textarea */
+.bid-msg label {
+  margin-bottom: 4px;
+  display: inline-block;
+}
+
+/* Save button style */
+.bid-edit-save {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.bid-edit-save:hover {
+  background: linear-gradient(135deg, #27ae60, #1abc9c);
 }

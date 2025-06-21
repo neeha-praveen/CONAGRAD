@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import ExpertNavbar from '../../components/Expert/ExpertNavbar/ExpertNavbar'
 import './YourBids.css'
-import { User, Eye, Frown, Banknote, Calendar, Vote, X } from 'lucide-react'
+import { User, Eye, Frown, Banknote, Calendar, Vote, X, PencilLine } from 'lucide-react'
 
 const YourBids = () => {
   const [bids, setBids] = useState([]);
@@ -12,7 +12,11 @@ const YourBids = () => {
   const [error, setError] = useState(null);
   const [filteredBids, setFilteredBids] = useState([]);
   const [viewedBid, setViewedBid] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedBid, setEditedBid] = useState({});
+  const [saveLoading, setSaveLoading] = useState(false);
   const navigate = useNavigate();
+  const textareaRef = useRef();
 
   useEffect(() => {
     const token = localStorage.getItem('expertToken');
@@ -35,7 +39,7 @@ const YourBids = () => {
       const response = await axios.get('http://localhost:4000/api/expert/bids', {
         headers: { Authorization: `Bearer ${token}` }
       });
-
+      console.log(response.data);
       setBids(response.data);
       setError(null);
     } catch (error) {
@@ -68,6 +72,98 @@ const YourBids = () => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
   };
+
+  const handleEditBid = () => {
+    setIsEditing(true);
+    setEditedBid({
+      bidAmount: viewedBid.bidAmount,
+      bidMessage: viewedBid.bidMessage || ''
+    });
+  };
+
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedBid({
+      bidAmount: viewedBid.bidAmount,
+      bidMessage: viewedBid.bidMessage
+    });
+  };
+
+  const handleSaveBid = async () => {
+    try {
+      setSaveLoading(true);
+      const token = localStorage.getItem('expertToken');
+
+      const amountToSave =
+        editedBid.bidAmount === '' || isNaN(parseFloat(editedBid.bidAmount))
+          ? viewedBid.bidAmount
+          : parseFloat(editedBid.bidAmount);
+
+      const messageToSave =
+        editedBid.bidMessage === undefined ? viewedBid.bidMessage : editedBid.bidMessage;
+
+      const response = await axios.put(
+        `http://localhost:4000/api/expert/bids/${viewedBid.bidId}`,
+        {
+          bidAmount: amountToSave,
+          bidMessage: messageToSave
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      // Update the local state
+      const updatedBids = bids.map(bid =>
+        bid.bidId === viewedBid.bidId
+          ? { ...bid, bidAmount: editedBid.bidAmount, bidMessage: editedBid.bidMessage }
+          : bid
+      );
+      setBids(updatedBids);
+
+      // Update the viewed bid
+      setViewedBid({
+        ...viewedBid,
+        bidAmount: editedBid.bidAmount,
+        bidMessage: editedBid.bidMessage
+      });
+
+      setIsEditing(false);
+
+      // Optional: Show success message
+      console.log('Bid updated successfully');
+
+    } catch (error) {
+      console.error('Error updating bid:', error);
+      // Optional: Show error message to user
+      alert('Failed to update bid. Please try again.');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (textareaRef.current && !isEditing) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [viewedBid, isEditing]);
+
+  const handleFileClick = (fileName) => {
+    if (fileName) {
+      // Construct the file URL - adjust this based on your backend file serving setup
+      const fileUrl = `http://localhost:4000/uploads/${fileName}`;
+      window.open(fileUrl, '_blank');
+    }
+  };
+
+  const closeModal = () => {
+    setViewedBid(null);
+    setIsEditing(false);
+    setEditedBid({});
+  };
+
 
   if (loading) {
     return (
@@ -150,7 +246,7 @@ const YourBids = () => {
                     </div>
                   </div>
                   <div className='bid-row-action'>
-                    <button className='view-button' onClick={() => handleViewBid(bid)}>
+                    <button className='bid-view-button' onClick={() => handleViewBid(bid)}>
                       <Eye className='view-icon'></Eye>
                       <span>VIEW</span>
                     </button>
@@ -167,19 +263,107 @@ const YourBids = () => {
         {viewedBid && (
           <div className='bid-modal'>
             <div className='bid-modal-content'>
-              <button className="close-btn" onClick={() => setViewedBid(null)}><X /></button>
-              <h2>{viewedBid.assignmentTitle}</h2>
-              <div className='student-info-bid'>
-                <User className='bid-icons'></User>
-                <span>{viewedBid.studentUsername}</span>
+              <div className='bid-modal-header'>
+                <h2>{viewedBid.assignmentTitle}</h2>
+                <span className={`bid-status bid-status-${viewedBid.bidStatus.replace(' ', '-')}`}>
+                  {viewedBid.bidStatus.toUpperCase()}
+                </span>
+                <button className="close-btn" onClick={closeModal}><X /></button>
               </div>
               <div className='bid-detail-section'>
-                <div className='bid-detail-header'></div>
+                <div className='bid-detail-header'>
+                  <div className='bid-title'>
+                    <h3>Bid Details</h3>
+                  </div>
+                  {!isEditing && viewedBid.bidStatus === 'pending' ? (
+                    <button className='bid-edit-btn' onClick={handleEditBid}>
+                      <PencilLine className='bid-edit' />
+                    </button>
+                  ) : isEditing ? (
+                    <button className='bid-edit-save' onClick={handleSaveBid} disabled={saveLoading}>SAVE</button>
+                  ) : null}
+
+                </div>
+                <div className='bid-detail-content'>
+                  <div className='bid-amount'>
+                    <label className='form-label-bid'><strong>Amount :</strong></label>
+                    <div className='form-bid-content amnt'>
+                      <input
+                        type="number"
+                        className='bid-input-field'
+                        value={isEditing ? editedBid.bidAmount : viewedBid.bidAmount}
+                        onChange={(e) => {
+                          if (isEditing) {
+                            setEditedBid({
+                              ...editedBid,
+                              bidAmount: e.target.value
+                            });
+                          }
+                        }}
+                        readOnly={!isEditing}
+                      />
+                    </div>
+                  </div>
+                  <div className='bid-msg'>
+                    <label className='form-label-bid'><strong>Message :</strong></label>
+                    <div className='form-bid-content msg'>
+                      <textarea
+                        ref={textareaRef}
+                        className='bid-textarea-field auto-resize'
+                        value={isEditing ? editedBid.bidMessage : viewedBid.bidMessage}
+                        onChange={(e) => {
+                          if (isEditing) {
+                            e.target.style.height = 'auto';
+                            e.target.style.height = `${e.target.scrollHeight}px`;
+                            setEditedBid((prev) => ({
+                              ...prev,
+                              bidMessage: e.target.value
+                            }));
+                          }
+                        }}
+                        readOnly={!isEditing}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className='assignment-detail-section'>
-                <p><i className="bx bx-book"></i> Subject: {viewedBid.assignmentSubject || 'Not specified'}</p>
-                <p><i className="bx bx-calendar"></i> Due: {formatDate(viewedBid.assignmentDueDate)}</p>
-                <p><i className="bx bx-text"></i> Description: {viewedBid.assignmentDescription}</p>
+                <div className='assignment-detail-header'>
+                  <h3>Assignment Details</h3>
+                </div>
+                <div className='assignment-detail-content'>
+                  <div className='assignment-field'>
+                    <i className="bx bx-book" />
+                    <strong>Subject:</strong>
+                    <span>{viewedBid.assignmentSubject || 'Not specified'}</span>
+                  </div>
+                  <div className='assignment-field'>
+                    <i className="bx bx-calendar" />
+                    <strong>Due:</strong>
+                    <span>{formatDate(viewedBid.assignmentDueDate)}</span>
+                  </div>
+                  <div className='assignment-field'>
+                    <i className="bx bx-user" />
+                    <strong>Student:</strong>
+                    <span>{viewedBid.studentUsername}</span>
+                  </div>
+                  <div className='assignment-field' style={{ gridColumn: '1 / -1' }}>
+                    <i className="bx bx-text" />
+                    <strong>Description:</strong>
+                    <span>{viewedBid.assignmentDescription}</span>
+                  </div>
+                  <div className='assignment-field assignment-file-link'>
+                    <i className="bx bx-file" />
+                    <strong>File:</strong>
+                    <a
+                      href={`http://localhost:4000/uploads/${viewedBid.fileName}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {viewedBid.fileName}
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -189,4 +373,4 @@ const YourBids = () => {
   )
 }
 
-export default YourBids
+export default YourBids 
