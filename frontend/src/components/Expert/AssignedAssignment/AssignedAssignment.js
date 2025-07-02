@@ -26,7 +26,6 @@ const AssignedAssignment = () => {
           }
         });
 
-        console.log('Fetched assignments:', res.data);
         setAssignments(res.data);
       } catch (error) {
         console.error('Error fetching assigned assignments:', error);
