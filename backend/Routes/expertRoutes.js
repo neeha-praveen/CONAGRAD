@@ -157,7 +157,7 @@ router.get('/assigned-assignments', auth, async (req, res) => {
     const expertId = req.userId;
     const assignments = await Assignment.find({ expertId })
       .populate('studentId', 'username')
-      .select('title description dueDate status fileUrl fileName studentId');
+      .select('title description dueDate status fileUrl fileName studentId subject');
 
     res.json(assignments);
   } catch (err) {
@@ -252,6 +252,7 @@ router.get('/bids', auth, async (req, res) => {
   }
 });
 
+// Edit bid
 router.put('/bids/:id', auth, async (req, res) => {
   try {
     const expertId = req.userId;
@@ -276,6 +277,34 @@ router.put('/bids/:id', auth, async (req, res) => {
   } catch (err) {
     console.error('Update bid error:', err);
     res.status(500).json({ error: 'Failed to update bid' });
+  }
+});
+
+router.get('/completed-assignments', auth, async (req, res) => {
+  try {
+    const expertId = req.userId;
+    
+    const completedAssignments = await Assignment.find({ 
+      expertId: expertId,
+      status: 'completed'
+    })
+    .populate('studentId', 'username name')
+    .select('title description dueDate status subject studentId submittedAt completedAt createdAt')
+    .sort({ completedAt: -1, submittedAt: -1 });
+
+    // Add mock data for amount and rating since they're not in your schema
+    // You should add these fields to your Assignment schema if needed
+    const assignmentsWithDetails = completedAssignments.map(assignment => ({
+      ...assignment.toObject(),
+      amountPaid: Math.floor(Math.random() * 500) + 100, // Mock data - replace with actual field
+      rating: Math.floor(Math.random() * 2) + 4, // Mock data - replace with actual field
+      completedDate: assignment.completedAt || assignment.submittedAt || assignment.createdAt
+    }));
+
+    res.json(assignmentsWithDetails);
+  } catch (err) {
+    console.error('Error fetching completed assignments:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

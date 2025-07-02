@@ -65,7 +65,7 @@ const AssignmentSchema = new mongoose.Schema({
     studentName: String,
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'students',
+        ref: 'Student',
         required: true
     },
     bids: [BidSchema],
