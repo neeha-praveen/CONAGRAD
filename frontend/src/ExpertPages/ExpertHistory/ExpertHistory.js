@@ -1,74 +1,211 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import './ExpertHistory.css'
 import axios from 'axios';
-import ExpertNavbar from "../../components/Expert/ExpertNavbar/ExpertNavbar.js";
-import './ExpertHistory.css';
+import { Book, FileText, User, Calendar, DollarSign, Star, Eye } from 'lucide-react';
 
 const ExpertHistory = () => {
-  const [completedAssignments, setCompletedAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [assignments, setAssignments] = useState([]);
+    const [sortOrder, setSortOrder] = useState('latest');
 
-  useEffect(() => {
-    fetchCompletedAssignments();
-  }, []);
+    useEffect(() => {
+        const fetchCompletedAssignments = async () => {
+            try {
+                const token = localStorage.getItem('expertToken');
+                if (!token) {
+                    setError('No authentication token found');
+                    setLoading(false);
+                    return;
+                }
 
-  const fetchCompletedAssignments = async () => {
-    try {
-      const token = localStorage.getItem('expertToken');
-      const response = await axios.get('http://localhost:4000/expert/completed-assignments', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCompletedAssignments(response.data);
-      setLoading(false);
-    } catch (error) {
-      setError('Failed to fetch completed assignments');
-      setLoading(false);
-    }
-  };
+                const response = await axios.get('/api/expert/completed-assignments', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                setAssignments(response.data);
+            }
+            catch (error) {
+                console.error('Error fetching completed assignments:', error);
+                setError('Failed to fetch assignments');
+            }
+            finally {
+                setLoading(false);
+            }
+        }
+        fetchCompletedAssignments();
+    }, []);
 
-  return (
-    <div className="history-container">
-      <ExpertNavbar />
-      <div className="history-content">
-        <h2>History</h2>
-        
-        {loading ? (
-          <div className="loading-spinner"></div>
-        ) : error ? (
-          <div className="error-message">
-            {error}
-            <button onClick={fetchCompletedAssignments} className="retry-btn">
-              Retry
-            </button>
-          </div>
-        ) : completedAssignments.length === 0 ? (
-          <div className="no-history">
-            No completed assignments yet
-          </div>
-        ) : (
-          <div className="history-grid">
-            {completedAssignments.map((assignment) => (
-              <div key={assignment._id} className="history-card">
-                <div className="card-header">
-                  <h3>{assignment.title}</h3>
-                  <span className="completion-date">
-                    Completed: {new Date(assignment.completedAt).toLocaleDateString()}
-                  </span>
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const sortedAssignments = [...assignments].sort((a, b) => {
+        const dateA = new Date(a.completedDate || a.createdAt);
+        const dateB = new Date(b.completedDate || b.createdAt);
+
+        if (sortOrder === 'latest') {
+            return dateB - dateA;
+        } else {
+            return dateA - dateB;
+        }
+    });
+
+    const renderStars = (rating) => {
+        return Array.from({ length: 5 }, (_, index) => (
+            <Star
+                key={index}
+                className={`star-icon ${index < rating ? 'filled' : ''}`}
+                size={14}
+            />
+        ));
+    };
+
+    const handleRetry = () => {
+        setError(null);
+        setLoading(true);
+        // Re-fetch assignments
+        const fetchCompletedAssignments = async () => {
+            try {
+                const token = localStorage.getItem('expertToken');
+                const response = await axios.get('/api/expert/completed-assignments', {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                setAssignments(response.data);
+            }
+            catch (error) {
+                console.error('Error fetching completed assignments:', error);
+                setError('Failed to fetch assignments');
+            }
+            finally {
+                setLoading(false);
+            }
+        }
+        fetchCompletedAssignments();
+    };
+
+    const handleViewAssignment = (assignmentId) => {
+        // Add your navigation logic here
+        console.log('View assignment:', assignmentId);
+        // For example: navigate(`/expert/assignment/${assignmentId}`);
+    };
+
+    return (
+        <div className='expert-history'>
+            <div className='expert-history-content'>
+                <div className='expert-history-header'>
+                    <h1>History</h1>
+                    <select
+                        className='expert-history-sort'
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                    >
+                        <option value="latest">Latest</option>
+                        <option value="oldest">Oldest</option>
+                    </select>
                 </div>
-                <div className="assignment-details">
-                  <p><i className="bx bx-user"></i> Student: {assignment.studentName}</p>
-                  <p><i className="bx bx-book"></i> Subject: {assignment.subject}</p>
-                  <p><i className="bx bx-calendar"></i> Due: {new Date(assignment.dueDate).toLocaleDateString()}</p>
-                  <p><i className="bx bx-check-circle"></i> Status: Completed</p>
-                  <p><i className="bx bx-text"></i> Description: {assignment.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
-export default ExpertHistory;
+                {loading ? (
+                    <div className='loading-spinner'>
+                        <div className="spinner"></div>
+                    </div>
+                ) : error ? (
+                    <div className='error-message'>
+                        {error}
+                        <button className='retry-btn' onClick={handleRetry}>
+                            Retry
+                        </button>
+                    </div>
+                ) : sortedAssignments.length === 0 ? (
+                    <div className='error-message'>
+                        No completed assignments found
+                    </div>
+                ) : (
+                    <div className="expert-history-grid">
+                        {sortedAssignments.map((assignment) => (
+                            <div key={assignment._id} className='expert-history-card'>
+                                <div className='expert-history-header-section'>
+                                    <div className='expert-history-header-title'>
+                                        <div className='assignment-icon'>
+                                            <FileText className='icon' />
+                                        </div>
+                                        <div className='title-info'>
+                                            <h3>{assignment.title}</h3>
+                                            <div className="student-info">
+                                                <User className="user-icon" />
+                                                <span>{assignment.studentId?.username || 'Unknown Student'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="header-actions">
+                                        <button
+                                            className='view-button'
+                                        >
+                                            <Eye className="button-icon" />
+                                            <span>VIEW</span>
+                                        </button>
+                                    </div>
+
+                                </div>
+
+                                <div className='history-details'>
+                                    <div className="history-detail-item">
+                                        <div className="detail-content">
+                                            <Book className="detail-icon" />
+                                            <div className="field-label-value">
+                                                <h4>Subject: </h4>
+                                                <p>{assignment.subject || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="history-detail-item">
+                                        <div className="detail-content">
+                                            <Calendar className="detail-icon" />
+                                            <div className="field-label-value">
+                                                <h4>Completed on: </h4>
+                                                <p>{formatDate(assignment.completedDate)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="history-detail-item">
+                                        <div className="detail-content">
+                                            <Calendar className="detail-icon" />
+                                            <div className="field-label-value">
+                                                <h4>Amount: </h4>
+                                                <p>₹{assignment.amountPaid || 'N/A'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="history-detail-item">
+                                        <div className="detail-content">
+                                            <Star className="detail-icon" />
+                                            <div className="field-label-value">
+                                                <h4>Rating: </h4>
+                                                <div className="rating-stars">{renderStars(assignment.rating || 0)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div >
+    );
+}
+
+export default ExpertHistory
