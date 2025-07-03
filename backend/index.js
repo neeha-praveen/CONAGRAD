@@ -347,7 +347,6 @@ app.get('/debug/database', async (req, res) => {
     }
 });
 
-
 // Root route
 app.get('/', (req, res) => {
     res.json({ 
