@@ -97,12 +97,12 @@ function App() {
         <Route path="/profile/:expertId" element={<ExpertProfile />} />
         <Route path="/expert-settings" element={<ExpertSettings />} />
         {/* <Route path="/expert-history" element={<ExpertHistory />} /> */}
-        <Route path="/your-work/:assignmentId" element={<YourWork />} />
         <Route path="/your-work" element={<YourWorkDashboard />} />
         <Route path="/bids" element={<YourBids/>}/>
 
         <Route element={<ExpertLayout/>}>
           <Route path="/expert-history" element={<ExpertHistory />} />
+          <Route path="/your-work/:assignmentId" element={<YourWork />} />
         </Route>
       </Routes>
     </Router>

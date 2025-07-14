@@ -166,16 +166,34 @@ router.get('/assigned-assignments', auth, async (req, res) => {
   }
 });
 
-// Submit completed assignment with note and file
+router.get('/assignment/:id', auth, async (req, res) => {
+  try {
+    console.log('✅ Route hit:', req.params.id);
+    const expertId = req.userId;
+    const assignmentId = req.params.id;
+
+    const assignment = await Assignment.findOne({ _id: assignmentId, expertId })
+      .populate('studentId', 'username')
+      .select('title description dueDate status fileUrl fileName studentId subject submissionNote submittedFileUrl submittedFileName submittedAt');
+
+    if (!assignment) {
+      console.log('assignment not found')
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    res.json(assignment);
+  } catch (err) {
+    console.error('Error fetching assignment by ID:', err);
+    res.status(500).json({ error: 'Failed to fetch assignment' });
+  }
+})
+
+// Submit assignment with note and file
 router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, res) => {
   try {
     const assignmentId = req.params.id;
     const note = req.body.note;
     const file = req.file;
-    console.log('➡️ SUBMIT HIT');
-    console.log('➡️ Assignment ID:', req.params.id);
-    console.log('➡️ Note:', req.body.note);
-    console.log('➡️ File:', req.file);
 
     if (!file) {
       return res.status(400).json({ error: 'File is required' });
@@ -201,6 +219,34 @@ router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, r
     res.status(500).json({ error: 'Failed to submit assignment' });
   }
 });
+
+router.put('/edit-submission/:id', auth, upload.array('files', 5), async (req, res) => {
+  try {
+    const assignmentId = req.params.id;
+    const note = req.body.note;
+    const files = req.files;
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
+
+    assignment.submissionNote = note;
+    assignment.status = 'to be reviewed';
+    assignment.submittedAt = new Date();
+
+    if (files && files.length > 0) {
+      assignment.submittedFileUrls = files.map(f => `/uploads/${f.filename}`);
+      assignment.submittedFileNames = files.map(f => f.originalname);
+    }
+
+    await assignment.save();
+
+    res.json({ message: 'Submission updated successfully', assignment });
+  } catch (error) {
+    console.error('Edit submission error:', error);
+    res.status(500).json({ error: 'Failed to edit submission' });
+  }
+});
+
 
 // Get bids submitted by expert
 router.get('/bids', auth, async (req, res) => {
@@ -283,14 +329,14 @@ router.put('/bids/:id', auth, async (req, res) => {
 router.get('/completed-assignments', auth, async (req, res) => {
   try {
     const expertId = req.userId;
-    
-    const completedAssignments = await Assignment.find({ 
+
+    const completedAssignments = await Assignment.find({
       expertId: expertId,
       status: 'completed'
     })
-    .populate('studentId', 'username name')
-    .select('title description dueDate status subject studentId submittedAt completedAt createdAt')
-    .sort({ completedAt: -1, submittedAt: -1 });
+      .populate('studentId', 'username name')
+      .select('title description dueDate status subject studentId submittedAt completedAt createdAt')
+      .sort({ completedAt: -1, submittedAt: -1 });
 
     // Add mock data for amount and rating since they're not in your schema
     // You should add these fields to your Assignment schema if needed
