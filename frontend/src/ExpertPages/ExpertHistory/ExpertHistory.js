@@ -86,25 +86,25 @@ const ExpertHistory = () => {
                 icon: CheckCircle,
                 color: '#22c55e',
                 bgColor: '#dcfce7',
-                title: '✅ Completed Assignments'
+                title: 'Completed Assignments'
             },
             'in-progress': {
                 icon: Clock,
                 color: '#f59e0b',
                 bgColor: '#fef3c7',
-                title: '🟡 In Progress Assignments'
+                title: 'In Progress Assignments'
             },
             'to-be-reviewed': {
                 icon: AlertCircle,
                 color: '#3b82f6',
                 bgColor: '#dbeafe',
-                title: '🕓 To Be Reviewed'
+                title: 'To Be Reviewed'
             },
             'rejected': {
                 icon: XCircle,
                 color: '#ef4444',
                 bgColor: '#fee2e2',
-                title: '❌ Rejected Assignments'
+                title: 'Rejected Assignments'
             }
         };
         return configs[status] || configs.pending;
