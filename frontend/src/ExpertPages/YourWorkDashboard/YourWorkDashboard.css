@@ -17,10 +17,9 @@ body {
 } 
 
 .your-work-dashboard-container {
-  min-height: 100vh;
   background-color: #f8f9fc;
   overflow-x: hidden;
   width: 195vh;
   padding: 0;
-  padding-top: 20px;
+  padding-top: 80px;
 }

@@ -6,7 +6,6 @@ import AssignedAssignment from "../../components/Expert/AssignedAssignment/Assig
 const YourWorkDashboard = () => {
   return (
     <div className='your-work-dashboard-container'>
-        <ExpertNavbar/>
         <AssignedAssignment/>
     </div>
   )
