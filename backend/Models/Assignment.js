@@ -26,23 +26,25 @@ const SubmissionSchema = new mongoose.Schema({
         ref: 'experts',
         required: true
     },
-    expertDocument: {
-        fileName: String,
-        fileUrl: String,
-        fileType: String,
-        fileSize: Number,
-        uploadDate: {
-            type: Date,
-            default: Date.now
-        }
-    },
     expertMessage: String,
     completionDate: Date,
     submittedDate: {
         type: Date,
         default: Date.now
     },
-})
+    files: [
+        {
+            fileName: String,
+            fileUrl: String,
+            fileType: String,
+            fileSize: Number,
+            uploadDate: {
+                type: Date,
+                default: Date.now
+            }
+        }
+    ]
+});
 
 const AssignmentSchema = new mongoose.Schema({
     title: { type: String, required: true },

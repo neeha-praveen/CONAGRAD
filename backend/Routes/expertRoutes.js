@@ -166,88 +166,6 @@ router.get('/assigned-assignments', auth, async (req, res) => {
   }
 });
 
-router.get('/assignment/:id', auth, async (req, res) => {
-  try {
-    console.log('✅ Route hit:', req.params.id);
-    const expertId = req.userId;
-    const assignmentId = req.params.id;
-
-    const assignment = await Assignment.findOne({ _id: assignmentId, expertId })
-      .populate('studentId', 'username')
-      .select('title description dueDate status fileUrl fileName studentId subject submissionNote submittedFileUrl submittedFileName submittedAt');
-
-    if (!assignment) {
-      console.log('assignment not found')
-      return res.status(404).json({ error: 'Assignment not found' });
-    }
-
-    res.json(assignment);
-  } catch (err) {
-    console.error('Error fetching assignment by ID:', err);
-    res.status(500).json({ error: 'Failed to fetch assignment' });
-  }
-})
-
-// Submit assignment with note and file
-router.post('/submit-assignment/:id', auth, upload.single('file'), async (req, res) => {
-  try {
-    const assignmentId = req.params.id;
-    const note = req.body.note;
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ error: 'File is required' });
-    }
-
-    const assignment = await Assignment.findById(assignmentId);
-    console.log('➡️ Assignment found:', assignment);
-    if (!assignment) {
-      return res.status(404).json({ error: 'Assignment not found' });
-    }
-
-    assignment.status = 'to be reviewed';
-    assignment.submissionNote = note;
-    assignment.submittedFileUrl = `/uploads/${file.filename}`;
-    assignment.submittedFileName = file.originalname;
-    assignment.submittedAt = new Date();
-
-    await assignment.save();
-
-    res.json({ message: 'Work submitted successfully', assignment });
-  } catch (error) {
-    console.error('Submit assignment error:', error);
-    res.status(500).json({ error: 'Failed to submit assignment' });
-  }
-});
-
-router.put('/edit-submission/:id', auth, upload.array('files', 5), async (req, res) => {
-  try {
-    const assignmentId = req.params.id;
-    const note = req.body.note;
-    const files = req.files;
-
-    const assignment = await Assignment.findById(assignmentId);
-    if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
-
-    assignment.submissionNote = note;
-    assignment.status = 'to be reviewed';
-    assignment.submittedAt = new Date();
-
-    if (files && files.length > 0) {
-      assignment.submittedFileUrls = files.map(f => `/uploads/${f.filename}`);
-      assignment.submittedFileNames = files.map(f => f.originalname);
-    }
-
-    await assignment.save();
-
-    res.json({ message: 'Submission updated successfully', assignment });
-  } catch (error) {
-    console.error('Edit submission error:', error);
-    res.status(500).json({ error: 'Failed to edit submission' });
-  }
-});
-
-
 // Get bids submitted by expert
 router.get('/bids', auth, async (req, res) => {
   try {
@@ -351,6 +269,139 @@ router.get('/completed-assignments', auth, async (req, res) => {
   } catch (err) {
     console.error('Error fetching completed assignments:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Submit assignment work (initial submission)
+router.post('/submit-assignment/:id', auth, upload.array('files', 3), async (req, res) => {
+  try {
+    const expertId = req.userId;
+    const assignmentId = req.params.id;
+    const note = req.body.note;
+    const files = req.files;
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'At least one file is required' });
+    }
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    if (assignment.expertId.toString() !== expertId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Create files array
+    const fileList = files.map(file => ({
+      fileName: file.originalname,
+      fileUrl: `/uploads/${file.filename}`,
+      fileType: file.mimetype,
+      fileSize: file.size,
+    }));
+
+    const newSubmission = {
+      expertId,
+      expertMessage: note,
+      submittedDate: new Date(),
+      files: fileList
+    };
+
+    console.log("New submission object:", newSubmission);
+
+    assignment.status = 'to be reviewed';
+    assignment.submission.push(newSubmission);
+
+    await assignment.save();
+    res.json({ message: 'Work submitted successfully', assignment });
+  } catch (error) {
+    console.error('Submit assignment error:', error);
+    res.status(500).json({ error: 'Failed to submit assignment' });
+  }
+});
+
+// Edit existing submission
+router.put('/edit-submission/:id', auth, upload.array('files', 3), async (req, res) => {
+  try {
+    const expertId = req.userId;
+    const assignmentId = req.params.id;
+    const note = req.body.note;
+    const files = req.files;
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    if (assignment.expertId.toString() !== expertId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    if (assignment.submission.length === 0) {
+      return res.status(400).json({ error: 'No submission found to edit' });
+    }
+
+    // Get the latest submission
+    const latestSubmissionIndex = assignment.submission.length - 1;
+    const latestSubmission = assignment.submission[latestSubmissionIndex];
+
+    // Update the note
+    latestSubmission.expertMessage = note;
+
+    // If new files are uploaded, replace the old files
+    if (files && files.length > 0) {
+      const fileList = files.map(file => ({
+        fileName: file.originalname,
+        fileUrl: `/uploads/${file.filename}`,
+        fileType: file.mimetype,
+        fileSize: file.size,
+      }));
+      
+      latestSubmission.files = fileList;
+    }
+
+    // Update submission date
+    latestSubmission.submittedDate = new Date();
+
+    await assignment.save();
+    res.json({ message: 'Submission updated successfully', assignment });
+  } catch (error) {
+    console.error('Edit submission error:', error);
+    res.status(500).json({ error: 'Failed to update submission' });
+  }
+});
+
+// Get assignment details (update existing route to include submission data)
+router.get('/assignment/:id', auth, async (req, res) => {
+  console.log(">>> HIT /assignment/:id", req.params.id, "expertId from token:", req.userId);
+
+  try {
+    const assignment = await Assignment.findOne({ _id: req.params.id, expertId: req.userId })
+      .populate('studentId', 'username')
+      .populate('submission.expertId', 'username')
+      .select('title description dueDate status fileUrl fileName studentId subject submission bids');
+
+    console.log(">>> After findOne, assignment =", assignment ? "FOUND" : "NOT FOUND");
+
+    if (!assignment) {
+      return res.status(404).json({ error: 'Assignment not found' });
+    }
+
+    console.log('Assignment data being sent:', {
+      id: assignment._id,
+      title: assignment.title,
+      status: assignment.status,
+      submissionCount: assignment.submission ? assignment.submission.length : 0,
+      latestSubmission: assignment.submission && assignment.submission.length > 0 
+        ? assignment.submission[assignment.submission.length - 1] 
+        : null
+    });
+
+    res.json(assignment);
+  } catch (err) {
+    console.error('Error fetching assignment by ID:', err);
+    res.status(500).json({ error: 'Failed to fetch assignment' });
   }
 });
 
