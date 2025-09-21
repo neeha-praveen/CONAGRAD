@@ -11,13 +11,12 @@ const YourWork = () => {
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    
+
     // Form states
     const [workDescription, setWorkDescription] = useState('');
     const [uploadedFiles, setUploadedFiles] = useState([]);
     const [isDragOver, setIsDragOver] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [existingFile, setExistingFile] = useState(null); // Track existing submitted file
 
     useEffect(() => {
         const fetchAssignment = async () => {
@@ -35,18 +34,11 @@ const YourWork = () => {
                 };
                 const res = await axios.get(`http://localhost:4000/api/expert/assignment/${assignmentId}`, config)
                 setAssignment(res.data)
-                
+
                 // Initialize form with existing submission data if available
-                if (res.data.submissionNote) {
-                    setWorkDescription(res.data.submissionNote);
-                }
-                
-                // Set existing file info if available
-                if (res.data.submittedFileName) {
-                    setExistingFile({
-                        name: res.data.submittedFileName,
-                        url: res.data.submittedFileUrl
-                    });
+                if (res.data.submission && res.data.submission.length > 0) {
+                    const latestSubmission = res.data.submission[res.data.submission.length - 1];
+                    setWorkDescription(latestSubmission.expertMessage || '');
                 }
             } catch (error) {
                 console.error('Failed to fetch assignment:', error)
@@ -80,20 +72,18 @@ const YourWork = () => {
         }
     };
 
-    const handleSubmittedFileView = () => {
-        if (assignment?.submittedFileUrl) {
-            window.open(`http://localhost:4000${assignment.submittedFileUrl}`, '_blank');
-        }
-    };
-
-    const handleExistingFileView = () => {
-        if (existingFile?.url) {
-            window.open(`http://localhost:4000${existingFile.url}`, '_blank');
+    const handleSubmittedFileView = (fileUrl) => {
+        if (fileUrl) {
+            window.open(`http://localhost:4000${fileUrl}`, '_blank');
         }
     };
 
     const handleFileUpload = (event) => {
         const files = Array.from(event.target.files);
+        if (uploadedFiles.length + files.length > 3) {
+            alert("You can upload a maximum of 3 files.");
+            return;
+        }
         const newFiles = files.map(file => ({
             id: Date.now() + Math.random(),
             name: file.name,
@@ -117,6 +107,10 @@ const YourWork = () => {
         event.preventDefault();
         setIsDragOver(false);
         const files = Array.from(event.dataTransfer.files);
+        if (uploadedFiles.length + files.length > 3) {
+            alert("You can upload a maximum of 3 files.");
+            return;
+        }
         const newFiles = files.map(file => ({
             id: Date.now() + Math.random(),
             name: file.name,
@@ -128,10 +122,6 @@ const YourWork = () => {
 
     const removeFile = (fileId) => {
         setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
-    };
-
-    const removeExistingFile = () => {
-        setExistingFile(null);
     };
 
     const formatFileSize = (bytes) => {
@@ -152,17 +142,15 @@ const YourWork = () => {
             };
             const res = await axios.get(`http://localhost:4000/api/expert/assignment/${assignmentId}`, config);
             setAssignment(res.data);
-            
+
             // Update form state with new data
-            setWorkDescription(res.data.submissionNote || '');
-            if (res.data.submittedFileName) {
-                setExistingFile({
-                    name: res.data.submittedFileName,
-                    url: res.data.submittedFileUrl
-                });
+            if (res.data.submission && res.data.submission.length > 0) {
+                const latestSubmission = res.data.submission[res.data.submission.length - 1];
+                setWorkDescription(latestSubmission.expertMessage || '');
             } else {
-                setExistingFile(null);
+                setWorkDescription('');
             }
+
         } catch (error) {
             console.error('Error refreshing assignment data:', error);
         }
@@ -171,13 +159,15 @@ const YourWork = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (uploadedFiles.length === 0) {
-            alert("Please upload a file before submitting.");
+            alert("Please upload at least one file before submitting.");
             return;
         }
 
         const formData = new FormData();
         formData.append('note', workDescription);
-        formData.append('file', uploadedFiles[0].file); // Only submitting 1 file based on your current backend
+        uploadedFiles.forEach(fileObj => {
+            formData.append('files', fileObj.file);
+        });
 
         try {
             setSubmitting(true);
@@ -193,17 +183,13 @@ const YourWork = () => {
                 }
             );
 
-            // Refresh assignment data to get the updated submission info
             await refreshAssignmentData();
-            
             setShowSuccess(true);
             setUploadedFiles([]);
-            
-            // Hide success message after 3 seconds
+
             setTimeout(() => {
                 setShowSuccess(false);
             }, 3000);
-            
         } catch (error) {
             console.error('Error submitting work:', error);
             alert("Submission failed. Please try again.");
@@ -215,43 +201,39 @@ const YourWork = () => {
     const handleEditSubmission = () => {
         setIsEditing(true);
         setShowSuccess(false);
+        // Reset uploaded files for editing
+        setUploadedFiles([]);
     };
 
     const handleCancelEdit = () => {
         setIsEditing(false);
         setUploadedFiles([]);
         // Reset form to original values
-        setWorkDescription(assignment.submissionNote || '');
-        if (assignment.submittedFileName) {
-            setExistingFile({
-                name: assignment.submittedFileName,
-                url: assignment.submittedFileUrl
-            });
+        if (assignment.submission && assignment.submission.length > 0) {
+            const latestSubmission = assignment.submission[assignment.submission.length - 1];
+            setWorkDescription(latestSubmission.expertMessage || '');
         }
     };
 
     const handleSaveSubmission = async (event) => {
         event.preventDefault();
-        
-        // Check if we have either existing file or new file
-        if (!existingFile && uploadedFiles.length === 0) {
-            alert("Please keep the existing file or upload a new one.");
+
+        if (uploadedFiles.length === 0) {
+            alert("Please upload at least one file.");
             return;
         }
 
         const formData = new FormData();
         formData.append('note', workDescription);
-        
-        // Only append new file if uploaded, otherwise keep existing
-        if (uploadedFiles.length > 0) {
-            formData.append('file', uploadedFiles[0].file);
-        }
+        uploadedFiles.forEach(fileObj => {
+            formData.append('files', fileObj.file);
+        });
 
         try {
             setSubmitting(true);
             const token = localStorage.getItem('expertToken');
-            await axios.post(
-                `http://localhost:4000/api/expert/submit-assignment/${assignmentId}`,
+            await axios.put(
+                `http://localhost:4000/api/expert/edit-submission/${assignmentId}`,
                 formData,
                 {
                     headers: {
@@ -261,17 +243,15 @@ const YourWork = () => {
                 }
             );
 
-            // Refresh assignment data
             await refreshAssignmentData();
-            
             setIsEditing(false);
             setUploadedFiles([]);
             setShowSuccess(true);
-            
+
             setTimeout(() => {
                 setShowSuccess(false);
             }, 3000);
-            
+
         } catch (error) {
             console.error('Error updating submission:', error);
             alert("Update failed. Please try again.");
@@ -280,8 +260,330 @@ const YourWork = () => {
         }
     };
 
-    const isSubmitted = assignment?.status === 'to be reviewed' || assignment?.status === 'completed';
-    const isCompleted = assignment?.status === 'completed';
+    // Determine submission state based on assignment status
+    const getSubmissionState = () => {
+        if (!assignment) return 'not-submitted';
+
+        if (assignment.status === 'completed') return 'completed';
+        if (assignment.status === 'to be reviewed') return 'submitted';
+        return 'not-submitted';
+    };
+
+    const submissionState = getSubmissionState();
+    const latestSubmission = assignment?.submission && assignment.submission.length > 0
+        ? assignment.submission[assignment.submission.length - 1]
+        : null;
+
+    const renderSubmissionContent = () => {
+
+        switch (submissionState) {
+            case 'not-submitted':
+                return (
+                    <form onSubmit={handleSubmit} className='submission-form'>
+                        {/* File Upload */}
+                        <div className='workform-group'>
+                            <label className='work-form-label'>Upload Files (Max 3 files)</label>
+                            <div
+                                className={`file-upload-area ${isDragOver ? 'drag-over' : ''}`}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                                onClick={() => document.getElementById('file-input').click()}
+                            >
+                                <Upload className='upload-icon' />
+                                <div className='upload-text'>
+                                    Click to upload or drag and drop files here
+                                </div>
+                                <div className='upload-hint'>
+                                    Maximum 3 files allowed
+                                </div>
+                                <input
+                                    id='file-input'
+                                    type='file'
+                                    className='file-input'
+                                    multiple
+                                    onChange={handleFileUpload}
+                                />
+                            </div>
+
+                            {/* Uploaded Files Preview */}
+                            {uploadedFiles.length > 0 && (
+                                <div className='uploaded-files'>
+                                    <div className='files-header'>
+                                        <span className='files-count'>{uploadedFiles.length} file{uploadedFiles.length > 1 ? 's' : ''} selected</span>
+                                    </div>
+                                    {uploadedFiles.map(file => (
+                                        <div key={file.id} className='uploaded-file'>
+                                            <div className='file-icon-wrapper'>
+                                                <File className='file-icon' />
+                                            </div>
+                                            <div className='file-details'>
+                                                <div className='file-name'>{file.name}</div>
+                                                <div className='file-size'>{formatFileSize(file.size)}</div>
+                                            </div>
+                                            <button
+                                                type='button'
+                                                className='remove-file-btn'
+                                                onClick={() => removeFile(file.id)}
+                                                title="Remove file"
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Note */}
+                        <div className='workform-group'>
+                            <label className='work-form-label'>Add a note for submission</label>
+                            <textarea
+                                className='workform-textarea'
+                                value={workDescription}
+                                onChange={(e) => setWorkDescription(e.target.value)}
+                                placeholder='Add your submission notes here...'
+                            />
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type='submit'
+                            className='submit-button'
+                            disabled={submitting || uploadedFiles.length === 0}
+                        >
+                            <Send className='submit-icon' />
+                            {submitting ? 'Submitting...' : 'Submit Work'}
+                        </button>
+                    </form>
+                );
+
+            case 'submitted':
+                return (
+                    <div className='submitted-work'>
+                        {/* Always show previously submitted content in uneditable form */}
+                        <div className='previous-submission'>
+                            {latestSubmission?.expertMessage && (
+                                <div className='submitted-note'>
+                                    <h4>Previously Submitted Note</h4>
+                                    <div className='note-content'>
+                                        {latestSubmission.expertMessage}
+                                    </div>
+                                </div>
+                            )}
+
+                            {latestSubmission?.files && latestSubmission.files.length > 0 && (
+                                <div className='submitted-file'>
+                                    <h4>Previously Submitted Files</h4>
+                                    {latestSubmission.files.map((file, index) => (
+                                        <div key={index} className='file-section'>
+                                            <File className='file-icon-section' />
+                                            <span className='file-name-dark'>{file.fileName}</span>
+                                            <button className='download-btn' onClick={() => handleSubmittedFileView(file.fileUrl)}>View</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                        </div>
+
+                        {/* Edit submission section */}
+                        {isEditing ? (
+                            <div className='edit-submission-section'>
+                                <div className='edit-header'>
+                                    <h4>Update Your Submission</h4>
+                                    <p className='edit-description'>
+                                        Edit your note and manage your files below.
+                                        You can remove old files and add new ones.
+                                    </p>
+                                </div>
+
+                                <form onSubmit={handleSaveSubmission} className='submission-form'>
+
+                                    {/* Previously uploaded files */}
+                                    {uploadedFiles.some(file => file.existing) && (
+                                        <div className='workform-group'>
+                                            <label className='work-form-label'>Previously Submitted Files</label>
+                                            <div className='uploaded-files'>
+                                                {uploadedFiles
+                                                    .filter(file => file.existing)
+                                                    .map(file => (
+                                                        <div key={file.id} className='uploaded-file'>
+                                                            <div className='file-icon-wrapper'>
+                                                                <File className='file-icon' />
+                                                            </div>
+                                                            <div className='file-details'>
+                                                                <div className='file-name'>{file.name}</div>
+                                                                <div className='file-size'>{formatFileSize(file.size)}</div>
+                                                            </div>
+                                                            <button
+                                                                type='button'
+                                                                className='remove-file-btn'
+                                                                onClick={() => removeFile(file.id)}
+                                                                title="Remove file"
+                                                            >
+                                                                <X size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* File Upload for adding new files */}
+                                    <div className='workform-group'>
+                                        <label className='work-form-label'>Add New Files (Max 3 files)</label>
+                                        <div
+                                            className={`file-upload-area ${isDragOver ? 'drag-over' : ''}`}
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={handleDrop}
+                                            onClick={() => document.getElementById('file-input-edit').click()}
+                                        >
+                                            <Upload className='upload-icon' />
+                                            <div className='upload-text'>Click to upload or drag & drop</div>
+                                            <div className='upload-hint'>You can add more files here</div>
+                                            <input
+                                                id='file-input-edit'
+                                                type='file'
+                                                className='file-input'
+                                                multiple
+                                                onChange={handleFileUpload}
+                                            />
+                                        </div>
+
+                                        {/* Preview of newly added files */}
+                                        {uploadedFiles.some(file => !file.existing) && (
+                                            <div className='uploaded-files'>
+                                                {uploadedFiles
+                                                    .filter(file => !file.existing)
+                                                    .map(file => (
+                                                        <div key={file.id} className='uploaded-file'>
+                                                            <div className='file-icon-wrapper'>
+                                                                <File className='file-icon' />
+                                                            </div>
+                                                            <div className='file-details'>
+                                                                <div className='file-name'>{file.name}</div>
+                                                                <div className='file-size'>{formatFileSize(file.size)}</div>
+                                                            </div>
+                                                            <button
+                                                                type='button'
+                                                                className='remove-file-btn'
+                                                                onClick={() => removeFile(file.id)}
+                                                                title="Remove file"
+                                                            >
+                                                                <X size={18} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Note editing */}
+                                    <div className='workform-group'>
+                                        <label className='work-form-label'>Update Submission Note</label>
+                                        <textarea
+                                            className='workform-textarea editing'
+                                            value={workDescription}
+                                            onChange={(e) => setWorkDescription(e.target.value)}
+                                            placeholder='Update your submission notes...'
+                                        />
+                                    </div>
+
+                                    {/* Action buttons */}
+                                    <div className='submit-work-btn'>
+                                        <button
+                                            type='button'
+                                            className='cancel-edit-btn'
+                                            onClick={handleCancelEdit}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            type='submit'
+                                            className='submit-button'
+                                            disabled={submitting || uploadedFiles.length === 0}
+                                        >
+                                            <Send className='submit-icon' />
+                                            {submitting ? 'Updating...' : 'Update Submission'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                        ) : (
+                            /* Edit button when not editing */
+                            <div className='edit-action'>
+                                <button
+                                    className='edit-submission-btn'
+                                    onClick={handleEditSubmission}
+                                >
+                                    <Edit className='edit-icon' />
+                                    Edit Submission
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
+
+            case 'completed':
+                return (
+                    <div className='submitted-work'>
+                        {/* Display completed note */}
+                        {latestSubmission?.expertMessage && (
+                            <div className='submitted-note'>
+                                <h4>Final Submission Note</h4>
+                                <div className='note-content'>
+                                    {latestSubmission.expertMessage}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Display completed files */}
+                        {latestSubmission?.files && latestSubmission.files.length > 0 && (
+                            <div className='submitted-file'>
+                                <h4>Completed Work Files</h4>
+                                {latestSubmission.files.map((file, index) => (
+                                    <div key={index} className='file-section'>
+                                        <File className='file-icon-section' />
+                                        <span className='file-name-dark'>{file.fileName}</span>
+                                        <button
+                                            className='download-btn'
+                                            onClick={() => handleSubmittedFileView(file.fileUrl)}
+                                        >
+                                            View
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Success message for completed work */}
+                        <div className='success-message'>
+                            <CheckCircle className='success-icon' />
+                            Work completed successfully!
+                        </div>
+                    </div>
+                );
+
+            default:
+                return null;
+        }
+    };
+
+    const getSubmissionHeaderTitle = () => {
+        switch (submissionState) {
+            case 'not-submitted':
+                return 'Submit Your Work';
+            case 'submitted':
+                return isEditing ? 'Edit Submission' : 'Submitted Work';
+            case 'completed':
+                return 'Completed Work';
+            default:
+                return 'Submit Your Work';
+        }
+    };
 
     return (
         <div className='your-work-container'>
@@ -322,20 +624,24 @@ const YourWork = () => {
                                     {assignment.status || 'Pending'}
                                 </div>
                             </div>
-                            
+
                             <div className='details-grid'>
                                 <div className="detail-card due-date-card">
-                                    <div className="detail-header">
-                                        <Calendar className="detail-icon" />
-                                        <h4>Due Date</h4>
+                                    <div className="detail-header due-date">
+                                        <div className='detail-header-right'>
+                                            <Calendar className="detail-icon" />
+                                            <h4>Due Date</h4>
+                                        </div>
+                                        <div className='detail-header-left'>
+                                            <div className="time-remaining">
+                                                <Clock className="clock-icon" />
+                                                <span>{calculateTimeRemaining(assignment.dueDate)}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="detail-content">
                                         <div className="due-date-text">
                                             {new Date(assignment.dueDate).toLocaleDateString()}
-                                        </div>
-                                        <div className="time-remaining">
-                                            <Clock className="clock-icon" />
-                                            <span>{calculateTimeRemaining(assignment.dueDate)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -345,6 +651,9 @@ const YourWork = () => {
                                     <div className='detail-header'>
                                         <Coins className='detail-icon' />
                                         <h4>Amount</h4>
+                                    </div>
+                                    <div className='detail-content'>
+                                        {/* Add your amount logic here */}
                                     </div>
                                 </div>
                             </div>
@@ -366,181 +675,26 @@ const YourWork = () => {
                                 </div>
                             )}
                         </div>
-                        
+
                         {/* Submission section */}
                         <div className='submission-section'>
                             <div className='submission-header'>
-                                <div className='submission-icon'><Send className='icon'/></div>
-                                <h3>
-                                    {isCompleted ? 'Completed Work' : 
-                                     isSubmitted ? 'Submitted Work' : 
-                                     'Submit Your Work'}
-                                </h3>
+                                <div className='submission-icon'><Send className='icon' /></div>
+                                <h3>{getSubmissionHeaderTitle()}</h3>
                             </div>
 
+                            {/* Success message */}
                             {showSuccess && (
                                 <div className='success-message'>
                                     <CheckCircle className='success-icon' />
-                                    {isEditing ? 'Submission updated successfully!' : 'Work submitted successfully!'}
+                                    {submissionState === 'not-submitted' ?
+                                        'Work submitted successfully!' :
+                                        'Submission updated successfully!'}
                                 </div>
                             )}
 
-                            {isSubmitted && !isEditing ? (
-                                <div className='submitted-work'>
-                                    {/* Submitted Note */}
-                                    <div className='submitted-note'>
-                                        <h4>Your Note:</h4>
-                                        <div className='note-content'>
-                                            {assignment.submissionNote || 'No note provided'}
-                                        </div>
-                                    </div>
-
-                                    {/* Submitted File */}
-                                    {assignment.submittedFileName && (
-                                        <div className='submitted-file'>
-                                            <h4>Submitted File:</h4>
-                                            <div className='file-section'>
-                                                <File className='file-icon-section' />
-                                                <span className='file-name-dark'>{assignment.submittedFileName}</span>
-                                                <button className='download-btn' onClick={handleSubmittedFileView}>View</button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Edit button (only if not completed) */}
-                                    {!isCompleted && (
-                                        <button className='edit-submission-btn' onClick={handleEditSubmission}>
-                                            <Edit className='edit-icon' />
-                                            Edit Submission
-                                        </button>
-                                    )}
-                                </div>
-                            ) : (!isSubmitted || isEditing) ? (
-                                <form className='submission-form' onSubmit={isEditing ? handleSaveSubmission : handleSubmit}>
-                                    <div className='form-group'>
-                                        <label className='work-form-label'>Notes</label>
-                                        <textarea
-                                            className={`workform-textarea ${isEditing ? 'editing' : ''}`}
-                                            placeholder="Describe your work or any notes you have for the student."
-                                            value={workDescription}
-                                            onChange={(e) => setWorkDescription(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className='form-group'>
-                                        <label className="work-form-label">Upload Files</label>
-                                        
-                                        {/* Show existing file when editing */}
-                                        {isEditing && existingFile && (
-                                            <div className="existing-file-section" style={{ marginBottom: '12px' }}>
-                                                <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '8px' }}>
-                                                    Current file:
-                                                </div>
-                                                <div className="uploaded-file">
-                                                    <div className="file-info">
-                                                        <File className="file-icon" />
-                                                        <span>{existingFile.name}</span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                                        <button 
-                                                            type="button" 
-                                                            className="download-btn" 
-                                                            onClick={handleExistingFileView}
-                                                            style={{ padding: '4px 8px', fontSize: '0.8rem' }}
-                                                        >
-                                                            View
-                                                        </button>
-                                                        <button 
-                                                            type="button" 
-                                                            className="remove-file" 
-                                                            onClick={removeExistingFile}
-                                                        >
-                                                            <X size={16} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {uploadedFiles.length > 0 && (
-                                            <div className="uploaded-files">
-                                                {uploadedFiles.map((file) => (
-                                                    <div key={file.id} className="uploaded-file">
-                                                        <div className="file-info">
-                                                            <File className="file-icon" />
-                                                            <span>{file.name}</span>
-                                                            <span style={{ color: '#888', fontSize: '0.8rem' }}>
-                                                                ({formatFileSize(file.size)})
-                                                            </span>
-                                                        </div>
-                                                        <button type="button" className="remove-file" onClick={() => removeFile(file.id)}>
-                                                            <X size={16} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        
-                                        <div
-                                            className={`file-upload-area ${isDragOver ? 'drag-over' : ''}`}
-                                            onDragOver={handleDragOver}
-                                            onDragLeave={handleDragLeave}
-                                            onDrop={handleDrop}
-                                            onClick={() => document.getElementById('file-input').click()}
-                                        >
-                                            <Upload className="upload-icon" />
-                                            <div className="upload-text">
-                                                {isEditing ? 'Click to upload a new file or drag and drop' : 'Click to upload or drag and drop files here'}
-                                            </div>
-                                            <div className="upload-hint">Supported formats: .zip, .js, .jsx, .html, .css, .pdf, .md</div>
-                                            <input
-                                                id="file-input"
-                                                type="file"
-                                                className="file-input"
-                                                multiple
-                                                accept=".zip,.js,.jsx,.html,.css,.pdf,.md,.txt,.json"
-                                                onChange={handleFileUpload}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '12px' }}>
-                                        <button
-                                            type="submit"
-                                            className="submit-button"
-                                            disabled={!workDescription.trim() || submitting || (!existingFile && uploadedFiles.length === 0)}
-                                        >
-                                            <Send className="submit-icon" />
-                                            {submitting ? 
-                                                (isEditing ? 'Saving...' : 'Submitting...') : 
-                                                (isEditing ? 'Save Submission' : 'Submit Work')
-                                            }
-                                        </button>
-                                        
-                                        {isEditing && (
-                                            <button
-                                                type="button"
-                                                className="cancel-edit-btn"
-                                                onClick={handleCancelEdit}
-                                                style={{
-                                                    padding: '14px 24px',
-                                                    background: '#6b7280',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '8px',
-                                                    fontWeight: '600',
-                                                    fontSize: '0.95rem',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.2s ease'
-                                                }}
-                                            >
-                                                Cancel
-                                            </button>
-                                        )}
-                                    </div>
-                                </form>
-                            ) : null}
+                            {/* Dynamic content based on submission state */}
+                            {renderSubmissionContent()}
                         </div>
                     </div>
                 )}
