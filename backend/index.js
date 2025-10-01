@@ -7,10 +7,11 @@ const errorHandler = require("./middleware/errorHandler");
 const jwt = require('jsonwebtoken');
 const authMiddleware = require("./middleware/auth");
 require('dotenv').config();
-const studentRoutes = require('./routes/student');
 
-// FIXED: Correct path with capital R
-const expertRoutes = require('./Routes/expertRoutes'); // Make sure this path is correct
+const studentRoutes = require('./Routes/student');
+const expertRoutes = require('./Routes/expertRoutes');
+const chatRoutes = require('./Routes/chatRoutes');
+
 const app = express();
 const PORT = 4000;
 
@@ -19,20 +20,20 @@ mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 })
-.then(() => {
-    console.log('Connected to MongoDB Atlas');
-    console.log('Database:', mongoose.connection.db.databaseName);
-    mongoose.connection.db.listCollections().toArray().then(collections => {
-        console.log('Available collections:', collections.map(c => c.name));
-    });
-})
-.catch((err) => console.error('MongoDB connection error:', err));
+    .then(() => {
+        console.log('Connected to MongoDB Atlas');
+        console.log('Database:', mongoose.connection.db.databaseName);
+        mongoose.connection.db.listCollections().toArray().then(collections => {
+            console.log('Available collections:', collections.map(c => c.name));
+        });
+    })
+    .catch((err) => console.error('MongoDB connection error:', err));
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-auth-token']
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-auth-token']
 }));
 app.use(express.json());
 
@@ -63,6 +64,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 // FIXED: Mount expert routes BEFORE other conflicting routes
 app.use('/api/expert', expertRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api/chats', chatRoutes);
 
 // Import Models
 const Assignment = require('./Models/Assignment');
@@ -71,17 +73,17 @@ const Expert = require('./Models/Expert');
 
 // Student Routes (keep these for backward compatibility)
 app.post("/register", async (req, res) => {
-  try {
-    const { name, email, username, password } = req.body;
+    try {
+        const { name, email, username, password } = req.body;
         const newStudent = new Student({ name, email, username, password });
         await newStudent.save();
-    res.status(201).json({ 
+        res.status(201).json({
             message: "Registration successful!",
-      redirectTo: "/login"
-    });
-  } catch (error) {
+            redirectTo: "/login"
+        });
+    } catch (error) {
         res.status(500).json({ error: "Registration failed" });
-  }
+    }
 });
 
 app.post("/login", async (req, res) => {
@@ -91,14 +93,14 @@ app.post("/login", async (req, res) => {
         if (!student) {
             return res.status(401).json({ error: "Invalid credentials" });
         }
-        
+
         const token = jwt.sign(
             { userId: student._id, userType: 'student' },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
-        
-        res.status(200).json({ 
+
+        res.status(200).json({
             message: "Login successful!",
             token,
             user: {
@@ -132,8 +134,8 @@ app.post("/upload-assignment", authMiddleware, upload.single('file'), async (req
 
         await newAssignment.save();
         await newAssignment.populate('studentId', 'name username');
-        
-        res.status(201).json({ 
+
+        res.status(201).json({
             message: "Assignment uploaded successfully",
             assignment: newAssignment
         });
@@ -150,7 +152,7 @@ app.get('/available-assignments', authMiddleware, async (req, res) => {
             .find({ status: 'pending' })
             .populate('studentId', 'name username')
             .sort({ createdAt: -1 });
-            
+
         res.json(assignments);
     } catch (error) {
         console.error('Error fetching assignments:', error);
@@ -175,13 +177,13 @@ app.get("/current-work", async (req, res) => {
 app.get('/expert/current-assignment', authMiddleware, async (req, res) => {
     try {
         const currentAssignment = await Assignment
-            .findOne({ 
+            .findOne({
                 expertId: req.userId,
                 status: 'assigned'
             })
             .populate('studentId', 'name username')
             .populate('expertId', 'name username');
-            
+
         res.json(currentAssignment);
     } catch (error) {
         console.error('Error checking current assignment:', error);
@@ -198,30 +200,30 @@ app.post("/accept-assignment/:id", authMiddleware, async (req, res) => {
         });
 
         if (existingAssignment) {
-            return res.status(400).json({ 
-                error: "You already have an active assignment. Please complete it first." 
+            return res.status(400).json({
+                error: "You already have an active assignment. Please complete it first."
             });
         }
 
         const assignment = await Assignment.findByIdAndUpdate(
             req.params.id,
-            { 
-                $set: { 
+            {
+                $set: {
                     status: 'assigned',
                     expertId: req.userId
                 }
             },
             { new: true }
         ).populate('studentId', 'name username')
-         .populate('expertId', 'name username');
+            .populate('expertId', 'name username');
 
         if (!assignment) {
             return res.status(404).json({ error: "Assignment not found" });
         }
 
-        res.json({ 
+        res.json({
             message: "Assignment accepted successfully",
-            assignment 
+            assignment
         });
     } catch (error) {
         res.status(500).json({ error: "Failed to accept assignment" });
@@ -295,8 +297,8 @@ app.post("/complete-assignment/:id", async (req, res) => {
     try {
         const assignment = await Assignment.findByIdAndUpdate(
             req.params.id,
-            { 
-                $set: { 
+            {
+                $set: {
                     status: 'completed'
                 }
             },
@@ -307,9 +309,9 @@ app.post("/complete-assignment/:id", async (req, res) => {
             return res.status(404).json({ error: "Assignment not found" });
         }
 
-        res.json({ 
+        res.json({
             message: "Assignment completed successfully",
-            assignment 
+            assignment
         });
     } catch (error) {
         res.status(500).json({ error: "Failed to complete assignment" });
@@ -332,7 +334,7 @@ app.get('/debug/database', async (req, res) => {
         const collections = await mongoose.connection.db.listCollections().toArray();
         const assignmentCount = await Assignment.countDocuments();
         const sampleAssignment = await Assignment.findOne();
-        
+
         res.json({
             status: dbStatus,
             collections: collections.map(c => c.name),
@@ -349,7 +351,7 @@ app.get('/debug/database', async (req, res) => {
 
 // Root route
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'Expert Assignment API Server',
         endpoints: {
             test: '/test',
@@ -392,7 +394,7 @@ const addTestData = async () => {
 
 // Root route
 app.get('/', (req, res) => {
-    res.json({ 
+    res.json({
         message: 'Expert Assignment API Server',
         endpoints: {
             test: '/test',
@@ -431,7 +433,7 @@ app.post('/api/assignments/upload', authMiddleware, upload.single('file'), async
         }
 
         const { title, description, subject, dueDate } = req.body;
-        
+
         // Create new assignment
         const newAssignment = new Assignment({
             title,
@@ -445,9 +447,9 @@ app.post('/api/assignments/upload', authMiddleware, upload.single('file'), async
             status: 'pending',
             submittedDate: new Date()
         });
-        
+
         await newAssignment.save();
-        
+
         res.status(201).json({
             message: 'Assignment uploaded successfully',
             assignment: newAssignment
@@ -458,12 +460,73 @@ app.post('/api/assignments/upload', authMiddleware, upload.single('file'), async
     }
 });
 
-
-// Before app.listen
 addTestData().then(() => {
-  console.log('Test data check complete');
+    console.log('Test data check complete');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const http = require("http");
+const { Server } = require("socket.io");
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+    cors: {
+        origin: ["http://localhost:3000"],
+        methods: ["GET", "POST"],
+    },
+});
+
+const ChatMessage = require('./Models/ChatMessage');
+
+io.on("connection", (socket) => {
+    console.log("New client connected:", socket.id);
+
+    socket.on("joinRoom", (assignmentId) => {
+        socket.join(assignmentId);
+        console.log(`Socket ${socket.id} joined room ${assignmentId}`);
+    });
+
+    socket.on("chatMessage", async (msg) => {
+        console.log("Received message:", msg);
+
+        try {
+            // Save message to database
+            const newMessage = new ChatMessage({
+                assignmentId: msg.assignmentId,
+                senderId: msg.sender,
+                senderModel: msg.senderModel,
+                message: msg.text,
+            });
+
+            await newMessage.save();
+
+            // Populate sender info
+            await newMessage.populate('senderId', 'name username');
+
+            // Broadcast to everyone in the room including sender
+            io.to(msg.assignmentId).emit("message", {
+                assignmentId: msg.assignmentId,
+                sender: msg.sender,
+                senderName: msg.senderName,
+                senderId: newMessage.senderId,
+                text: msg.text,
+                message: msg.text,
+                timestamp: newMessage.createdAt,
+                createdAt: newMessage.createdAt
+            });
+
+            console.log("Message saved and broadcasted");
+        } catch (error) {
+            console.error("Error saving message:", error);
+            socket.emit("error", { message: "Failed to save message" });
+        }
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Client disconnected:", socket.id);
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`Server running with sockets on http://localhost:${PORT}`);
 });
