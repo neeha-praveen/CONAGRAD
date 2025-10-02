@@ -42,7 +42,7 @@ const ExpertDashboard = () => {
         navigate('/expert-login');
         return;
       }
-      const response = await axios.get('http://localhost:4000/available-assignments', {
+      const response = await axios.get('http://localhost:4000/api/expert/available-assignments', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -62,7 +62,7 @@ const ExpertDashboard = () => {
       const token = localStorage.getItem('expertToken');
       if (!token) return;
 
-      const response = await axios.get('http://localhost:4000/expert/current-assignment', {
+      const response = await axios.get('http://localhost:4000/api/expert/current-assignment', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
