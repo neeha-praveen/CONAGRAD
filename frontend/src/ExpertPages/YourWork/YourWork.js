@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom';
-import axios from 'axios'
+import expertApi from '../../config/expertApi';
 import './YourWork.css'
 import { Calendar, Clock, FileText, User, Coins, File, Send, CheckCircle, Upload, X, Edit, MessagesSquare } from 'lucide-react';
 import ChatBox from '../../components/Expert/ChatBox/ChatBox';
@@ -37,7 +37,7 @@ const YourWork = () => {
                         Authorization: `Bearer ${token}`,
                     }
                 };
-                const res = await axios.get(`http://localhost:4000/api/expert/assignment/${assignmentId}`, config)
+                const res = await expertApi.get(`/expert/assignment/${assignmentId}`, config)
                 setAssignment(res.data)
 
                 // Initialize form with existing submission data if available
@@ -164,7 +164,7 @@ const YourWork = () => {
                     Authorization: `Bearer ${token}`,
                 }
             };
-            const res = await axios.get(`http://localhost:4000/api/expert/assignment/${assignmentId}`, config);
+            const res = await expertApi.get(`/expert/assignment/${assignmentId}`, config);
             setAssignment(res.data);
 
             // Update form state with new data
@@ -208,8 +208,8 @@ const YourWork = () => {
         try {
             setSubmitting(true);
             const token = localStorage.getItem('expertToken');
-            await axios.post(
-                `http://localhost:4000/api/expert/submit-assignment/${assignmentId}`,
+            await expertApi.post(
+                `/expert/submit-assignment/${assignmentId}`,
                 formData,
                 {
                     headers: {
@@ -289,8 +289,8 @@ const YourWork = () => {
         try {
             setSubmitting(true);
             const token = localStorage.getItem('expertToken');
-            await axios.put(
-                `http://localhost:4000/api/expert/edit-submission/${assignmentId}`,
+            await expertApi.put(
+                `/expert/edit-submission/${assignmentId}`,
                 formData,
                 {
                     headers: {

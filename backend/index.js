@@ -1,532 +1,203 @@
+// Core & Config
 const express = require("express");
+const http = require("http");
+const path = require("path");
+require("dotenv").config();
+
+// Security
+const helmet = require("helmet");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const sanitizeHtml = require("sanitize-html");
+const { loginLimiter, chatLimiter, apiLimiter } = require("./middleware/rateLimiter");
+
+// Database & Middleware
 const mongoose = require("mongoose");
-const multer = require('multer');
-const path = require('path');
+const multer = require("multer");
 const errorHandler = require("./middleware/errorHandler");
-const jwt = require('jsonwebtoken');
 const authMiddleware = require("./middleware/auth");
-require('dotenv').config();
 
-const studentRoutes = require('./Routes/student');
-const expertRoutes = require('./Routes/expertRoutes');
-const chatRoutes = require('./Routes/chatRoutes');
+// Models
+const Assignment = require("./Models/Assignment");
+const Student = require("./Models/Student");
+const Expert = require("./Models/Expert");
+const ChatMessage = require("./Models/ChatMessage");
 
+// Routes
+const studentRoutes = require("./Routes/student");
+const expertRoutes = require("./Routes/expertRoutes");
+const chatRoutes = require("./Routes/chatRoutes");
+const authRoutes = require("./Routes/authRoutes");
+
+// App Init
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
-// MongoDB Atlas Connection
-mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-    .then(() => {
-        console.log('Connected to MongoDB Atlas');
-        console.log('Database:', mongoose.connection.db.databaseName);
-        mongoose.connection.db.listCollections().toArray().then(collections => {
-            console.log('Available collections:', collections.map(c => c.name));
-        });
-    })
-    .catch((err) => console.error('MongoDB connection error:', err));
+// Security Middlewares
+app.use(helmet());
+app.use(cookieParser());
+// General API protection
+app.use("/api", apiLimiter);
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-auth-token']
+  origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
-app.use(express.json());
 
-// Debug middleware to log all requests
-app.use((req, res, next) => {
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+// Trust proxy (for HTTPS redirects if behind Nginx/Heroku)
+app.set("trust proxy", 1);
+
+// Debug logging (dev only)
+if (process.env.NODE_ENV !== "production") {
+  app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
-    console.log('Headers:', req.headers);
+    console.log("Headers:", req.headers);
     next();
-});
+  });
+}
 
-// Configure multer for file uploads
+// MongoDB Connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log("Connected to MongoDB Atlas");
+    console.log("Database:", mongoose.connection.db.databaseName);
+    mongoose.connection.db.listCollections().toArray().then(collections => {
+      console.log("Available collections:", collections.map(c => c.name));
+    });
+  })
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+// File Uploads
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
+  destination: (req, file, cb) => cb(null, "uploads/"),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
-
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-    fallthrough: false
-}));
+app.use("/uploads", express.static(path.join(__dirname, "uploads"), { fallthrough: false }));
 
-// FIXED: Mount expert routes BEFORE other conflicting routes
-app.use('/api/expert', expertRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/chats', chatRoutes);
+// Routes
+app.use("/api/expert", expertRoutes);
+app.use("/api/student", studentRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/auth", authRoutes);
 
-// Import Models
-const Assignment = require('./Models/Assignment');
-const Student = require('./Models/Student');
-const Expert = require('./Models/Expert');
-
-// Student Routes (keep these for backward compatibility)
-app.post("/register", async (req, res) => {
-    try {
-        const { name, email, username, password } = req.body;
-        const newStudent = new Student({ name, email, username, password });
-        await newStudent.save();
-        res.status(201).json({
-            message: "Registration successful!",
-            redirectTo: "/login"
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Registration failed" });
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "Expert Assignment API Server",
+    endpoints: {
+      test: "/test",
+      assignments: "/available-assignments",
+      currentAssignment: "/expert/current-assignment",
+      expertLogin: "/expert/login",
+      expertRegister: "/expert/register"
     }
+  });
 });
 
-app.post("/login", async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const student = await Student.findOne({ username, password });
-        if (!student) {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        const token = jwt.sign(
-            { userId: student._id, userType: 'student' },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        res.status(200).json({
-            message: "Login successful!",
-            token,
-            user: {
-                id: student._id,
-                username: student.username,
-                name: student.name
-            },
-            redirectTo: "/student-upload"
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Login failed" });
-    }
+// Test route
+app.get("/test", (req, res) => {
+  res.json({ message: "Server is running" });
 });
 
-// Student Upload Assignment Route
-app.post("/upload-assignment", authMiddleware, upload.single('file'), async (req, res) => {
-    try {
-        const { title, description, subject, dueDate } = req.body;
-        const studentId = req.userId;
-
-        const newAssignment = new Assignment({
-            title,
-            description,
-            subject,
-            studentId,
-            fileUrl: `/uploads/${req.file.filename}`,
-            fileName: req.file.originalname,
-            dueDate,
-            status: 'pending'
-        });
-
-        await newAssignment.save();
-        await newAssignment.populate('studentId', 'name username');
-
-        res.status(201).json({
-            message: "Assignment uploaded successfully",
-            assignment: newAssignment
-        });
-    } catch (error) {
-        console.error('Upload error:', error);
-        res.status(500).json({ error: "Failed to upload assignment" });
-    }
-});
-
-// Route for fetching available assignments
-app.get('/available-assignments', authMiddleware, async (req, res) => {
-    try {
-        const assignments = await Assignment
-            .find({ status: 'pending' })
-            .populate('studentId', 'name username')
-            .sort({ createdAt: -1 });
-
-        res.json(assignments);
-    } catch (error) {
-        console.error('Error fetching assignments:', error);
-        res.status(500).json({ error: 'Failed to fetch assignments' });
-    }
-});
-
-// Get Current Work Route
-app.get("/current-work", async (req, res) => {
-    try {
-        const currentWork = await Assignment.find({
-            status: 'assigned'
-        }).lean();
-        res.json(currentWork);
-    } catch (error) {
-        console.error('Error fetching current work:', error);
-        res.status(500).json({ error: "Failed to fetch current work" });
-    }
-});
-
-// Route for checking current assignment
-app.get('/expert/current-assignment', authMiddleware, async (req, res) => {
-    try {
-        const currentAssignment = await Assignment
-            .findOne({
-                expertId: req.userId,
-                status: 'assigned'
-            })
-            .populate('studentId', 'name username')
-            .populate('expertId', 'name username');
-
-        res.json(currentAssignment);
-    } catch (error) {
-        console.error('Error checking current assignment:', error);
-        res.status(500).json({ error: 'Failed to check current assignment' });
-    }
-});
-
-// Accept assignment route
-app.post("/accept-assignment/:id", authMiddleware, async (req, res) => {
-    try {
-        const existingAssignment = await Assignment.findOne({
-            status: 'assigned',
-            expertId: req.userId
-        });
-
-        if (existingAssignment) {
-            return res.status(400).json({
-                error: "You already have an active assignment. Please complete it first."
-            });
-        }
-
-        const assignment = await Assignment.findByIdAndUpdate(
-            req.params.id,
-            {
-                $set: {
-                    status: 'assigned',
-                    expertId: req.userId
-                }
-            },
-            { new: true }
-        ).populate('studentId', 'name username')
-            .populate('expertId', 'name username');
-
-        if (!assignment) {
-            return res.status(404).json({ error: "Assignment not found" });
-        }
-
-        res.json({
-            message: "Assignment accepted successfully",
-            assignment
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to accept assignment" });
-    }
-});
-
-// Submit bid route
-app.post('/submit-bid/:id', authMiddleware, async (req, res) => {
-    try {
-        console.log('Submit bid route hit:', req.params.id);
-        console.log('Request body:', req.body);
-        console.log('Expert ID:', req.userId);
-
-        const { amount, message } = req.body;
-        const assignmentId = req.params.id;
-        const expertId = req.userId;
-
-        if (!amount || !message) {
-            return res.status(400).json({
-                error: 'Amount and message are required'
-            });
-        }
-
-        const assignment = await Assignment.findById(assignmentId);
-        if (!assignment) {
-            return res.status(404).json({
-                error: 'Assignment not found'
-            });
-        }
-
-        if (assignment.status !== 'pending') {
-            return res.status(400).json({
-                error: 'Assignment is no longer available for bidding'
-            });
-        }
-
-        const bid = {
-            expertId,
-            amount: parseFloat(amount),
-            message,
-            timestamp: new Date()
-        };
-
-        const existingBidIndex = assignment.bids.findIndex(
-            b => b.expertId.toString() === expertId
-        );
-
-        if (existingBidIndex !== -1) {
-            assignment.bids[existingBidIndex] = bid;
-        } else {
-            assignment.bids.push(bid);
-        }
-
-        await assignment.save();
-
-        res.json({
-            success: true,
-            message: 'Bid submitted successfully'
-        });
-    } catch (error) {
-        console.error('Error submitting bid:', error);
-        res.status(500).json({
-            error: 'Failed to submit bid',
-            details: error.message
-        });
-    }
-});
-
-// Complete assignment route
-app.post("/complete-assignment/:id", async (req, res) => {
-    try {
-        const assignment = await Assignment.findByIdAndUpdate(
-            req.params.id,
-            {
-                $set: {
-                    status: 'completed'
-                }
-            },
-            { new: true }
-        );
-
-        if (!assignment) {
-            return res.status(404).json({ error: "Assignment not found" });
-        }
-
-        res.json({
-            message: "Assignment completed successfully",
-            assignment
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Failed to complete assignment" });
-    }
-});
-
-// Debug routes
+// Debug Routes (keep if useful in dev)
 app.get("/debug/collections", async (req, res) => {
-    try {
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        res.json(collections.map(col => col.name));
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    res.json(collections.map(col => col.name));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.get('/debug/database', async (req, res) => {
-    try {
-        const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        const assignmentCount = await Assignment.countDocuments();
-        const sampleAssignment = await Assignment.findOne();
+app.get("/debug/database", async (req, res) => {
+  try {
+    const dbStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    const assignmentCount = await Assignment.countDocuments();
+    const sampleAssignment = await Assignment.findOne();
 
-        res.json({
-            status: dbStatus,
-            collections: collections.map(c => c.name),
-            assignmentCount,
-            sampleAssignment
-        });
-    } catch (error) {
-        res.status(500).json({
-            error: error.message,
-            stack: error.stack
-        });
-    }
-});
-
-// Root route
-app.get('/', (req, res) => {
     res.json({
-        message: 'Expert Assignment API Server',
-        endpoints: {
-            test: '/test',
-            assignments: '/available-assignments',
-            currentAssignment: '/expert/current-assignment',
-            expertLogin: '/expert/login',
-            expertRegister: '/expert/register'
-        }
+      status: dbStatus,
+      collections: collections.map(c => c.name),
+      assignmentCount,
+      sampleAssignment
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
 });
 
-// Test route
-app.get('/test', (req, res) => {
-    res.json({ message: 'Server is running' });
-});
-
-// Add error handling middleware
-app.use(errorHandler);
-
-// Function to add test data
-const addTestData = async () => {
-    try {
-        const count = await Assignment.countDocuments();
-        if (count === 0) {
-            const testAssignment = new Assignment({
-                title: "Test Assignment",
-                description: "This is a test assignment",
-                subject: "Computer Science",
-                studentName: "John Doe",
-                dueDate: new Date("2025-03-20"),
-                status: "pending"
-            });
-            await testAssignment.save();
-            console.log('Test data added successfully');
-        }
-    } catch (error) {
-        console.error('Error adding test data:', error);
-    }
-};
-
-// Root route
-app.get('/', (req, res) => {
-    res.json({
-        message: 'Expert Assignment API Server',
-        endpoints: {
-            test: '/test',
-            assignments: '/available-assignments',
-            currentAssignment: '/expert/current-assignment'
-        }
-    });
-});
-
-// Test route
-app.get('/test', (req, res) => {
-    res.json({ message: 'Server is running' });
-});
-
-// Mount student routes
-app.use('/api/student', studentRoutes);
-
-// Add this new endpoint for student assignments
-app.get('/api/student/assignments', authMiddleware, async (req, res) => {
-    try {
-        const assignments = await Assignment
-            .find({ studentId: req.userId })
-            .sort({ createdAt: -1 });
-        res.json(assignments);
-    } catch (error) {
-        console.error('Error fetching student assignments:', error);
-        res.status(500).json({ error: "Failed to fetch assignments" });
-    }
-});
-
-// Add this new endpoint for assignment uploads
-app.post('/api/assignments/upload', authMiddleware, upload.single('file'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
-        }
-
-        const { title, description, subject, dueDate } = req.body;
-
-        // Create new assignment
-        const newAssignment = new Assignment({
-            title,
-            description,
-            subject: subject || 'General',
-            deadline: dueDate || null,
-            fileUrl: `/uploads/${req.file.filename}`,
-            fileName: req.file.originalname,
-            fileType: req.file.mimetype,
-            studentId: req.userId,
-            status: 'pending',
-            submittedDate: new Date()
-        });
-
-        await newAssignment.save();
-
-        res.status(201).json({
-            message: 'Assignment uploaded successfully',
-            assignment: newAssignment
-        });
-    } catch (error) {
-        console.error('Error uploading assignment:', error);
-        res.status(500).json({ error: 'Failed to upload assignment' });
-    }
-});
-
-addTestData().then(() => {
-    console.log('Test data check complete');
-});
-
-const http = require("http");
+// Socket.IO Setup
+const server = http.createServer(app);
 const { Server } = require("socket.io");
 
-const server = http.createServer(app);
-
 const io = new Server(server, {
-    cors: {
-        origin: ["http://localhost:3000"],
-        methods: ["GET", "POST"],
-    },
+  cors: {
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
 });
-
-const ChatMessage = require('./Models/ChatMessage');
 
 io.on("connection", (socket) => {
-    console.log("New client connected:", socket.id);
+  console.log("New client connected:", socket.id);
 
-    socket.on("joinRoom", (assignmentId) => {
-        socket.join(assignmentId);
-        console.log(`Socket ${socket.id} joined room ${assignmentId}`);
-    });
+  socket.on("joinRoom", (assignmentId) => {
+    socket.join(assignmentId);
+    console.log(`Socket ${socket.id} joined room ${assignmentId}`);
+  });
 
-    socket.on("chatMessage", async (msg) => {
-        console.log("Received message:", msg);
+  socket.on("chatMessage", async (msg) => {
+    try {
+      const sanitizedText = sanitizeHtml(msg.text || "", {
+        allowedTags: [],
+        allowedAttributes: {}
+      }).trim();
 
-        try {
-            // Save message to database
-            const newMessage = new ChatMessage({
-                assignmentId: msg.assignmentId,
-                senderId: msg.sender,
-                senderModel: msg.senderModel,
-                message: msg.text,
-            });
+      if (!sanitizedText) return;
 
-            await newMessage.save();
+      const newMessage = new ChatMessage({
+        assignmentId: msg.assignmentId,
+        senderId: msg.sender,
+        senderModel: msg.senderModel,
+        message: sanitizedText,
+      });
 
-            // Populate sender info
-            await newMessage.populate('senderId', 'name username');
+      await newMessage.save();
+      await newMessage.populate("senderId", "name username");
 
-            // Broadcast to everyone in the room including sender
-            io.to(msg.assignmentId).emit("message", {
-                assignmentId: msg.assignmentId,
-                sender: msg.sender,
-                senderName: msg.senderName,
-                senderId: newMessage.senderId,
-                text: msg.text,
-                message: msg.text,
-                timestamp: newMessage.createdAt,
-                createdAt: newMessage.createdAt
-            });
+      io.to(msg.assignmentId).emit("message", {
+        assignmentId: msg.assignmentId,
+        sender: msg.sender,
+        senderName: msg.senderName,
+        text: sanitizedText,
+        timestamp: newMessage.createdAt,
+      });
+    } catch (error) {
+      console.error("Socket message error:", error);
+      socket.emit("error", { message: "Failed to send message" });
+    }
+  });
 
-            console.log("Message saved and broadcasted");
-        } catch (error) {
-            console.error("Error saving message:", error);
-            socket.emit("error", { message: "Failed to save message" });
-        }
-    });
-
-    socket.on("disconnect", () => {
-        console.log("Client disconnected:", socket.id);
-    });
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
 });
 
+// Error Handler
+app.use(errorHandler);
+
+// Start Server
 server.listen(PORT, () => {
-    console.log(`Server running with sockets on http://localhost:${PORT}`);
+  console.log(`Server running with sockets on http://localhost:${PORT}`);
 });

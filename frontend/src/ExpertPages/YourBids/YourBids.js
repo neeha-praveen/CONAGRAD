@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import expertApi from '../../config/expertApi'
 import ExpertNavbar from '../../components/Expert/ExpertNavbar/ExpertNavbar'
 import './YourBids.css'
 import { User, Eye, Frown, Banknote, Calendar, Vote, X, PencilLine } from 'lucide-react'
@@ -36,7 +36,7 @@ const YourBids = () => {
       setLoading(true);
       const token = localStorage.getItem('expertToken');
 
-      const response = await axios.get('http://localhost:4000/api/expert/bids', {
+      const response = await expertApi.get('/expert/bids', {
         headers: { Authorization: `Bearer ${token}` }
       });
       console.log(response.data);
@@ -103,8 +103,8 @@ const YourBids = () => {
       const messageToSave =
         editedBid.bidMessage === undefined ? viewedBid.bidMessage : editedBid.bidMessage;
 
-      const response = await axios.put(
-        `http://localhost:4000/api/expert/bids/${viewedBid.bidId}`,
+      const response = await expertApi.put(
+        `/expert/bids/${viewedBid.bidId}`,
         {
           bidAmount: amountToSave,
           bidMessage: messageToSave

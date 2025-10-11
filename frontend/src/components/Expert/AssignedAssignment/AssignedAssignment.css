@@ -116,7 +116,7 @@
 .title-info {
     flex: 1;
     overflow: hidden;
-    max-width: 200px; 
+    max-width: 200px;
     overflow: hidden;
 }
 
@@ -270,8 +270,15 @@
     align-items: flex-start;
     gap: 12px;
     flex: 1;
-    min-width: 0; /* Prevents overflow */
+    min-width: 0;
+    margin: 0;
 }
+
+.detail-content div {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+} 
 
 .detail-icon {
     width: 20px;
@@ -293,7 +300,13 @@
     font-size: 0.8rem;
     margin: 0;
     line-height: 1.3;
-    word-wrap: break-word;
+    flex: 1 1 auto;
+    /* allow shrink + grow */
+    min-width: 0;
+    /* must be 0 for ellipsis */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .due-date-item .detail-content p {

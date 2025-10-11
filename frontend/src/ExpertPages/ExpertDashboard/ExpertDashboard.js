@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import expertApi from "../../config/expertApi.js";
 import "../ExpertDashboard/ExpertDashboard.css";
 import ExpertNavbar from "../../components/Expert/ExpertNavbar/ExpertNavbar.js"
 
@@ -42,7 +42,7 @@ const ExpertDashboard = () => {
         navigate('/expert-login');
         return;
       }
-      const response = await axios.get('http://localhost:4000/api/expert/available-assignments', {
+      const response = await expertApi.get('/expert/available-assignments', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -62,34 +62,13 @@ const ExpertDashboard = () => {
       const token = localStorage.getItem('expertToken');
       if (!token) return;
 
-      const response = await axios.get('http://localhost:4000/api/expert/current-assignment', {
+      const response = await expertApi.get('/expert/current-assignment', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       setCurrentAssignment(response.data);
     } catch (error) {
       console.error('Error checking current assignment:', error);
-    }
-  };
-
-  const handleAcceptAssignment = async (assignmentId) => {
-    try {
-      if (currentAssignment) {
-        setError('You already have an active assignment. Please complete it first.');
-        return;
-      }
-
-      const token = localStorage.getItem('expertToken');
-      const response = await axios.post(
-        `http://localhost:4000/accept-assignment/${assignmentId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setCurrentAssignment(response.data.assignment);
-      fetchAssignments();
-    } catch (err) {
-      setError('Failed to accept assignment');
     }
   };
 
@@ -102,34 +81,12 @@ const ExpertDashboard = () => {
     return ['all', ...new Set(subjects)];
   };
 
-  const handleSubmitAssignment = async () => {
-    try {
-      const token = localStorage.getItem('expertToken');
-      const formData = new FormData();
-      formData.append('file', submissionFile);
-      formData.append('assignmentId', currentAssignment._id);
-
-      await axios.post('http://localhost:4000/submit-assignment', formData, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      setCurrentAssignment(null);
-      fetchAssignments();
-      setActiveTab('history');
-    } catch (error) {
-      setError('Failed to submit assignment');
-    }
-  };
-
   const handleSubmitBid = async () => {
     try {
       const token = localStorage.getItem('expertToken');
       setBidError(null); // Clear previous bid error
-      const response = await axios.post(
-        `http://localhost:4000/submit-bid/${viewedAssignment._id}`,
+      const response = await expertApi.post(
+        `/expert/submit-bid/${viewedAssignment._id}`,
         {
           amount: bidAmount,
           message: bidMessage

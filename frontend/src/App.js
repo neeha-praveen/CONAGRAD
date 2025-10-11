@@ -3,6 +3,7 @@ import "./styles/App.css";
 import Services from './components/Services';
 import About from './components/About';
 import Contact from './components/Contact';
+import ProtectedRoute from "./config/protectedRoute";
 
 // Student Stuff
 import StudentAuth from "./components/studentAuth";
@@ -12,7 +13,7 @@ import AssignmentHistory from "./components/AssignmentHistory";
 import Profile from "./components/Profile";
 import Settings from "./components/Settings";
 import Help from "./components/Help";
-import StudentUpload from "./components/StudentUpload"; 
+import StudentUpload from "./components/StudentUpload";
 
 // Expert Stuff
 import ExpertAuth from "./components/expertAuth";
@@ -93,20 +94,48 @@ function App() {
 
         {/* Expert Pages */}
         <Route path="/expert-login" element={<ExpertAuth />} />
-        <Route path="/expert-dashboard" element={<ExpertDashboard />} />
-        <Route path="/profile/:expertId" element={<ExpertProfile />} />
-        <Route path="/expert-settings" element={<ExpertSettings />} />
-        {/* <Route path="/expert-history" element={<ExpertHistory />} /> */}
-        {/* <Route path="/your-work" element={<YourWorkDashboard />} /> */}
-        <Route path="/bids" element={<YourBids/>}/>
+        <Route path="/expert-dashboard" element={
+          <ProtectedRoute userType="expert">
+            <ExpertDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/profile/:expertId" element={
+          <ProtectedRoute userType="expert">
+            <ExpertProfile />
+          </ProtectedRoute>
+        } />
+        <Route path="/expert-settings" element={
+          <ProtectedRoute userType="expert">
+            <ExpertSettings />
+          </ProtectedRoute>
+        } />
 
-        <Route element={<ExpertLayout/>}>
-          <Route path="/expert-history" element={<ExpertHistory />} />
-          <Route path="/your-work/:assignmentId" element={<YourWork />} />
-          <Route path="/your-work" element={<YourWorkDashboard />} />
+        <Route path="/bids" element={
+          <ProtectedRoute userType="expert">
+            <YourBids />
+          </ProtectedRoute>
+        } />
+
+        <Route element={<ExpertLayout />}>
+          <Route path="/expert-history" element={
+            <ProtectedRoute userType="expert">
+              <ExpertHistory />
+            </ProtectedRoute>
+          } />
+          <Route path="/your-work/:assignmentId" element={
+            <ProtectedRoute userType="expert">
+              <YourWork />
+            </ProtectedRoute>
+          } />
+          <Route path="/your-work" element={
+            <ProtectedRoute userType="expert">
+              <YourWorkDashboard />
+            </ProtectedRoute>
+          } />
         </Route>
       </Routes>
     </Router>
   );
 }
+
 export default App;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './ExpertHistory.css'
-import axios from 'axios';
+import expertApi from '../../config/expertApi';
 import { Book, FileText, User, Calendar, DollarSign, Star, Eye, ChevronDown, ChevronUp, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const ExpertHistory = () => {
@@ -26,7 +26,7 @@ const ExpertHistory = () => {
                 }
 
                 // Change the API endpoint to fetch all assignments instead of just completed ones
-                const response = await axios.get('/api/expert/assigned-assignments', {
+                const response = await expertApi.get('/expert/assigned-assignments', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -134,7 +134,7 @@ const ExpertHistory = () => {
         const fetchAllAssignments = async () => {
             try {
                 const token = localStorage.getItem('expertToken');
-                const response = await axios.get('/api/expert/assignments', {
+                const response = await expertApi.get('/expert/assignments', {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }

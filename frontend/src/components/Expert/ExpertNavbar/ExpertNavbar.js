@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import './/ExpertNavbar.css';
+import expertApi from '../../../config/expertApi';
 
 const ExpertNavbar = () => {
   const [showDropdown, setShowDropdown] = useState(false);
@@ -26,13 +27,32 @@ const ExpertNavbar = () => {
     };
   }, [showDropdown]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setLoggingOut(true);
-    setTimeout(() => {
-      localStorage.removeItem('expertToken');
-      localStorage.removeItem('expertUsername');
-      navigate('/expert-login');
-    }, 2000);
+    try {
+      // 1️⃣ Notify backend to clear refresh token
+      await expertApi.post("/expert/logout");
+
+      // 2️⃣ Clear all local storage items
+      localStorage.removeItem("expertToken");
+      localStorage.removeItem("expertUsername");
+      localStorage.removeItem("expertName");
+      localStorage.removeItem("expertEmail");
+      localStorage.removeItem("expertId");
+      localStorage.removeItem("showCompleteProfilePopup");
+
+      // 3️⃣ Wait briefly for smooth UX
+      setTimeout(() => {
+        navigate("/expert-login");
+      }, 500);
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if backend call fails, force logout client-side
+      localStorage.clear();
+      navigate("/expert-login");
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -60,7 +80,7 @@ const ExpertNavbar = () => {
         </NavLink>
 
         <div className="expertprofile-container">
-          <div 
+          <div
             className="profile-trigger"
             onClick={() => setShowDropdown(!showDropdown)}
           >
@@ -79,7 +99,7 @@ const ExpertNavbar = () => {
                 </li>
                 <li>
                   <NavLink to="/bids" className="dropdown-item">
-                    < i class='bx  bx-archive'  ></i> 
+                    < i class='bx  bx-archive'  ></i>
                     Your Bids
                   </NavLink>
                 </li>

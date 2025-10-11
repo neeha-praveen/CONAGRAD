@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import expertApi from '../../config/expertApi.js';
 import './ExpertProfile.css';
 import ExpertNavbar from "../../components/Expert/ExpertNavbar/ExpertNavbar.js";
 
@@ -22,7 +22,7 @@ const ExpertProfile = () => {
   useEffect(() => {
     const fetchExpertData = async () => {
       try {
-        const response = await axios.get(`/api/expert/profile/${expertId}`, {
+        const response = await expertApi.get(`/expert/profile/${expertId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("expertToken")}`
           }
@@ -47,7 +47,7 @@ const handleEdit = () => {
 
   const handleSave = async () => {
     try {
-      const response = await axios.put(`/api/expert/profile/${expertId}`, editedData, {
+      const response = await expertApi.put(`/expert/profile/${expertId}`, editedData, {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem("expertToken")}`

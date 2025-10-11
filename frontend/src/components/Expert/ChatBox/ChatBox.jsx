@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import './ChatBox.css';
 import { CircleUserRound, SendHorizonal, X } from 'lucide-react';
 import { io } from 'socket.io-client';
-import axios from 'axios';
+import expertApi from '../../../config/expertApi';
 
 const ChatBox = ({ open, onClose, assignmentId, currentUser, otherUser, socketUrl = "http://localhost:4000" }) => {
   const [messages, setMessages] = useState([]);
@@ -29,7 +29,7 @@ const ChatBox = ({ open, onClose, assignmentId, currentUser, otherUser, socketUr
         const token = localStorage.getItem('expertToken');
         console.log("🔍 Fetching chat history for assignment:", assignmentId);
         
-        const res = await axios.get(`http://localhost:4000/api/chats/${assignmentId}/messages`, {
+        const res = await expertApi.get(`/chats/${assignmentId}/messages`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -138,8 +138,8 @@ const ChatBox = ({ open, onClose, assignmentId, currentUser, otherUser, socketUr
     // Save via REST (for persistence)
     try {
       const token = localStorage.getItem('expertToken');
-      const response = await axios.post(
-        `http://localhost:4000/api/chats/${assignmentId}/messages`,
+      const response = await expertApi.post(
+        `/chats/${assignmentId}/messages`,
         { message: newMsg.text },
         { 
           headers: { 

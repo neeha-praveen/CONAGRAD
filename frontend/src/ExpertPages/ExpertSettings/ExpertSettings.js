@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './ExpertSettings.css';
-import axios from 'axios';
+import expertApi from '../../config/expertApi.js';
 import ExpertNavbar from "../../components/Expert/ExpertNavbar/ExpertNavbar.js";
 
 const ToggleSwitch = ({ checked, onChange, id }) => (
@@ -45,8 +45,8 @@ const ExpertSettings = () => {
     }
 
     try {
-      const res = await axios.post(
-        `http://localhost:4000/api/expert/change-password/${expertId}`,
+      const res = await expertApi.post(
+        `/expert/change-password/${expertId}`,
         {
           currentPassword: passwords.current,
           newPassword: passwords.new
@@ -69,7 +69,7 @@ const ExpertSettings = () => {
   // Save button (for demo, just shows alert)
   const handleSave = async () => {
     try {
-      await axios.put(`http://localhost:4000/api/expert/settings/${expertId}`, {
+      await expertApi.put(`/expert/settings/${expertId}`, {
         notifications,
         appearance,
         language

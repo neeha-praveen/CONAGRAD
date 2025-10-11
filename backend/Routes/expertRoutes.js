@@ -3,58 +3,150 @@ const router = express.Router();
 const Expert = require('../Models/Expert');
 const auth = require('../middleware/auth');
 const jwt = require('jsonwebtoken');
+const bcrypt = require("bcrypt");
 const Assignment = require('../Models/Assignment');
 const upload = require('../middleware/upload');
+const { body, validationResult } = require("express-validator");
+const sanitizeHtml = require("sanitize-html");
+const { loginLimiter } = require("../middleware/rateLimiter");
+const logAction = require("../utils/logAction");
 
 // Expert registration
-router.post("/register", async (req, res) => {
-  try {
-    const { name, email, username, password } = req.body;
-    const newExpert = new Expert({ name, email, username, password });
-    await newExpert.save();
-    res.status(201).json({
-      message: "Registration successful!",
-      redirectTo: "/expert-login"
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Registration failed" });
-  }
-});
-
-// Expert login
-router.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const expert = await Expert.findOne({ username, password });
-    if (!expert) {
-      return res.status(401).json({ error: "Invalid credentials" });
+router.post(
+  "/register",
+  loginLimiter, // ✅ Apply rate limiter FIRST
+  [
+    body("name").trim().notEmpty().withMessage("Name is required"),
+    body("email").isEmail().normalizeEmail().withMessage("Valid email required"),
+    body("username").trim().isLength({ min: 3 }).escape().withMessage("Username must be at least 3 characters"),
+    body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters")
+  ],
+  async (req, res) => {
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    const token = jwt.sign(
-      { userId: expert._id, userType: 'expert' },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    try {
+      const { name, email, username, password } = req.body;
 
-    res.status(200).json({
-      message: "Login successful!",
-      token,
-      expert: {
-        id: expert._id,
-        username: expert.username,
-        name: expert.name,
-        email: expert.email,
-        bio: expert.bio || '',
-        expertise: expert.expertise || [],
-        education: expert.education || '',
-        experience: expert.experience || ''
-      },
-      redirectTo: "/expert-dashboard"
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Login failed" });
+      // Check if username exists
+      const existing = await Expert.findOne({ username });
+      if (existing) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+
+      // Check if email exists
+      const existingEmail = await Expert.findOne({ email });
+      if (existingEmail) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      // Hash password
+      const hashed = await bcrypt.hash(password, 10);
+
+      // Create expert
+      const expert = new Expert({
+        name: sanitizeHtml(name),
+        email,
+        username: sanitizeHtml(username),
+        password: hashed
+      });
+
+      await expert.save();
+
+      // Log successful registration
+      req.userType = "expert";
+      await logAction(req, "expert_register_success", { username });
+
+      res.status(201).json({ message: "Registration successful!" });
+    } catch (error) {
+      console.error("Register error:", error);
+      res.status(500).json({ error: "Registration failed" });
+    }
   }
-});
+);
+
+// Expert login
+router.post("/login",
+  loginLimiter, // ✅ Apply rate limiter FIRST
+  [
+    body("username").trim().notEmpty().withMessage("Username is required"),
+    body("password").notEmpty().withMessage("Password is required")
+  ],
+  async (req, res) => {
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const { username, password } = req.body;
+
+      // Find expert
+      const expert = await Expert.findOne({ username: sanitizeHtml(username) });
+      if (!expert) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Check password
+      const isMatch = await bcrypt.compare(password, expert.password);
+      if (!isMatch) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Access token (short-lived)
+      const accessToken = jwt.sign(
+        { userId: expert._id, userType: "expert" },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "15m" }
+      );
+
+      // Refresh token (longer-lived)
+      const refreshToken = jwt.sign(
+        { userId: expert._id, userType: "expert" },
+        process.env.JWT_REFRESH_SECRET,
+        { expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "7d" }
+      );
+
+      // Send refresh token as httpOnly cookie
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/api/auth/refresh",
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      // Log successful login
+      req.userType = "expert";
+      await logAction(req, "expert_login_success", { username: expert.username });
+
+      // Return access token + expert details
+      res.status(200).json({
+        message: "Login successful!",
+        accessToken,
+        expert: {
+          id: expert._id,
+          username: expert.username,
+          name: expert.name,
+          email: expert.email,
+          bio: expert.bio || "",
+          expertise: expert.expertise || [],
+          education: expert.education || "",
+          experience: expert.experience || ""
+        },
+        redirectTo: "/expert-dashboard"
+      });
+    } catch (error) {
+      console.error("Expert login error:", error);
+      await logAction(req, "expert_login_failed", { username: req.body.username });
+      res.status(500).json({ error: "Login failed" });
+    }
+  }
+);
 
 // Get expert profile
 router.get("/profile/:id", async (req, res) => {
@@ -92,6 +184,7 @@ router.put("/profile/:id", auth, async (req, res) => {
       return res.status(404).json({ error: "Expert not found" });
     }
 
+    await logAction(req, "expert_profile_updated", { expertId });
     res.json({
       username: updatedExpert.username,
       name: updatedExpert.name,
@@ -130,24 +223,27 @@ router.put('/settings/:id', auth, async (req, res) => {
   }
 });
 
-router.post('/change-password/:id', auth, async (req, res) => {
+router.post("/change-password/:id", auth, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   const expertId = req.params.id;
 
   try {
     const expert = await Expert.findById(expertId);
-    if (!expert) return res.status(404).json({ error: 'Expert not found' });
+    if (!expert) return res.status(404).json({ error: "Expert not found" });
 
-    if (expert.password !== currentPassword) {
-      return res.status(401).json({ error: 'Incorrect current password' });
+    const isMatch = await bcrypt.compare(currentPassword, expert.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: "Incorrect current password" });
     }
 
-    expert.password = newPassword;
+    expert.password = await bcrypt.hash(newPassword, 10);
     await expert.save();
-    res.json({ message: 'Password updated successfully' });
+
+    await logAction(req, "expert_password_changed", { expertId });
+    res.json({ message: "Password updated successfully" });
   } catch (err) {
-    console.error('Password change error:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Password change error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -163,6 +259,69 @@ router.get('/assigned-assignments', auth, async (req, res) => {
   } catch (err) {
     console.error('Error fetching assigned assignments:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Submit bid route
+router.post('/submit-bid/:id', auth, async (req, res) => {
+  try {
+    console.log('Submit bid route hit:', req.params.id);
+    console.log('Request body:', req.body);
+    console.log('Expert ID:', req.userId);
+
+    const { amount, message } = req.body;
+    const assignmentId = req.params.id;
+    const expertId = req.userId;
+
+    if (!amount || !message) {
+      return res.status(400).json({
+        error: 'Amount and message are required'
+      });
+    }
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({
+        error: 'Assignment not found'
+      });
+    }
+
+    if (assignment.status !== 'pending') {
+      return res.status(400).json({
+        error: 'Assignment is no longer available for bidding'
+      });
+    }
+
+    const bid = {
+      expertId,
+      amount: parseFloat(amount),
+      message,
+      timestamp: new Date()
+    };
+
+    const existingBidIndex = assignment.bids.findIndex(
+      b => b.expertId.toString() === expertId
+    );
+
+    if (existingBidIndex !== -1) {
+      assignment.bids[existingBidIndex] = bid;
+    } else {
+      assignment.bids.push(bid);
+    }
+
+    await assignment.save();
+
+    await logAction(req, "expert_bid_submitted", { assignmentId, amount });
+    res.json({
+      success: true,
+      message: 'Bid submitted successfully'
+    });
+  } catch (error) {
+    console.error('Error submitting bid:', error);
+    res.status(500).json({
+      error: 'Failed to submit bid',
+      details: error.message
+    });
   }
 });
 
@@ -357,7 +516,7 @@ router.put('/edit-submission/:id', auth, upload.array('files', 3), async (req, r
         fileType: file.mimetype,
         fileSize: file.size,
       }));
-      
+
       latestSubmission.files = fileList;
     }
 
@@ -365,6 +524,7 @@ router.put('/edit-submission/:id', auth, upload.array('files', 3), async (req, r
     latestSubmission.submittedDate = new Date();
 
     await assignment.save();
+    await logAction(req, "expert_submission_edited", { assignmentId });
     res.json({ message: 'Submission updated successfully', assignment });
   } catch (error) {
     console.error('Edit submission error:', error);
@@ -393,8 +553,8 @@ router.get('/assignment/:id', auth, async (req, res) => {
       title: assignment.title,
       status: assignment.status,
       submissionCount: assignment.submission ? assignment.submission.length : 0,
-      latestSubmission: assignment.submission && assignment.submission.length > 0 
-        ? assignment.submission[assignment.submission.length - 1] 
+      latestSubmission: assignment.submission && assignment.submission.length > 0
+        ? assignment.submission[assignment.submission.length - 1]
         : null
     });
 
@@ -405,5 +565,52 @@ router.get('/assignment/:id', auth, async (req, res) => {
   }
 });
 
+// Get all available assignments (for experts to browse)
+router.get("/available-assignments", auth, async (req, res) => {
+  try {
+    const assignments = await Assignment.find({ status: "pending" })
+      .populate("studentId", "name username")
+      .sort({ createdAt: -1 });
+
+    res.json(assignments);
+  } catch (error) {
+    console.error("Error fetching assignments:", error);
+    res.status(500).json({ error: "Failed to fetch assignments" });
+  }
+});
+
+// Get current assignment for expert
+router.get("/current-assignment", auth, async (req, res) => {
+  try {
+    const currentAssignment = await Assignment.findOne({
+      expertId: req.userId,
+      status: "assigned"
+    })
+      .populate("studentId", "name username")
+      .populate("expertId", "name username");
+
+    res.json(currentAssignment);
+  } catch (error) {
+    console.error("Error checking current assignment:", error);
+    res.status(500).json({ error: "Failed to check current assignment" });
+  }
+});
+
+// Logout route (invalidate refresh token)
+router.post("/logout", auth, async (req, res) => {
+  try {
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      path: "/api/auth/refresh"
+    });
+    await logAction(req, "expert_logout", { message: "Refresh token cleared" });
+    res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ error: "Logout failed" });
+  }
+});
 
 module.exports = router;

@@ -4,8 +4,11 @@ const ChatMessage = require("../Models/ChatMessage");
 const Student = require("../Models/Student");
 const Expert = require("../Models/Expert");
 const authMiddleware = require("../middleware/auth");
+const { body, validationResult } = require("express-validator");
+const sanitizeHtml = require("sanitize-html");
+const { chatLimiter } = require("../middleware/rateLimiter");
 
-// Get all messages for an assignment
+// ✅ Get all messages for an assignment
 router.get("/:assignmentId/messages", authMiddleware, async (req, res) => {
   try {
     const messages = await ChatMessage.find({
@@ -22,7 +25,7 @@ router.get("/:assignmentId/messages", authMiddleware, async (req, res) => {
         }
 
         return {
-          _id: msg._id.toString(), // Important: convert ObjectId to string
+          _id: msg._id.toString(),
           assignmentId: msg.assignmentId,
           sender: msg.senderId.toString(),
           senderName: sender?.name || sender?.username,
@@ -30,7 +33,7 @@ router.get("/:assignmentId/messages", authMiddleware, async (req, res) => {
           text: msg.message,
           message: msg.message,
           timestamp: msg.createdAt,
-          createdAt: msg.createdAt
+          createdAt: msg.createdAt,
         };
       })
     );
@@ -42,24 +45,43 @@ router.get("/:assignmentId/messages", authMiddleware, async (req, res) => {
   }
 });
 
-// Save new message
-router.post("/:assignmentId/messages", authMiddleware, async (req, res) => {
-  try {
-    const { message } = req.body;
+// ✅ Save new message (with sanitization + validation)
+router.post(
+  "/:assignmentId/messages",
+  authMiddleware, chatLimiter,
+  [
+    body("message")
+      .trim()
+      .notEmpty().withMessage("Message cannot be empty")
+      .isLength({ max: 1000 }).withMessage("Message too long"),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
 
-    const newMessage = new ChatMessage({
-      assignmentId: req.params.assignmentId,
-      senderId: req.userId,
-      senderModel: req.userType === "expert" ? "Expert" : "Student",
-      message,
-    });
+    try {
+      // 🧼 Sanitize user input before saving
+      const sanitizedMessage = sanitizeHtml(req.body.message, {
+        allowedTags: [], // No HTML allowed
+        allowedAttributes: {},
+      });
 
-    await newMessage.save();
-    res.status(201).json(newMessage);
-  } catch (error) {
-    console.error("Error saving message:", error);
-    res.status(500).json({ error: "Failed to save message" });
+      const newMessage = new ChatMessage({
+        assignmentId: req.params.assignmentId,
+        senderId: req.userId,
+        senderModel: req.userType === "expert" ? "Expert" : "Student",
+        message: sanitizedMessage,
+      });
+
+      await newMessage.save();
+      res.status(201).json(newMessage);
+    } catch (error) {
+      console.error("Error saving message:", error);
+      res.status(500).json({ error: "Failed to save message" });
+    }
   }
-});
+);
 
 module.exports = router;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, FileText, User, Eye } from 'lucide-react';
 import './AssignedAssignment.css';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import expertApi from '../../../config/expertApi';
 
 const AssignedAssignment = () => {
   const [assignments, setAssignments] = useState([]);
@@ -20,7 +20,7 @@ const AssignedAssignment = () => {
           return;
         }
 
-        const res = await axios.get('/api/expert/assigned-assignments', {
+        const res = await expertApi.get('/expert/assigned-assignments', {
           headers: {
             Authorization: `Bearer ${token}`
           }
