@@ -9,6 +9,7 @@ const AssignedAssignment = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [filter, setFilter] = useState('latest');
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -81,10 +82,35 @@ const AssignedAssignment = () => {
     );
   }
 
+  const filteredAssignments = [...assignments]
+    .filter(a => a.status?.toLowerCase() !== 'completed') // your existing filter
+    .sort((a, b) => {
+      if (filter === 'latest') {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else if (filter === 'oldest') {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      } else if (filter === 'due-soon') {
+        return new Date(a.dueDate) - new Date(b.dueDate);
+      } else {
+        return 0;
+      }
+    });
+
   return (
     <div className='assigned-container'>
       <div className='assigned-header'>
         <h1>Assigned Assignments</h1>
+        <div className='filter-section'>
+          <select
+            className='filter-dropdown'
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          >
+            <option value="latest">Latest</option>
+            <option value="oldest">Oldest</option>
+            <option value="due-soon">Due Soon</option>
+          </select>
+        </div>
       </div>
       {assignments.length === 0 ? (
         <div className="no-assignments">
@@ -92,62 +118,62 @@ const AssignedAssignment = () => {
         </div>
       ) : (
         <div className='assignment-grid'>
-          {assignments
+          {filteredAssignments
             .filter((assignment) => assignment.status?.toLowerCase() !== 'completed')
             .map((assignment) => (
-            <div key={assignment._id} className='assigned-assignment-card'>
-              <div className="assignment-header">
-                <div className="assignment-title-section">
-                  <div className="assignment-icon">
-                    <FileText className="icon" />
-                  </div>
-                  <div className="title-info">
-                    <h3>{assignment.title}</h3>
-                    <div className="student-info">
-                      <User className="user-icon" />
-                      <span>{assignment.studentId?.username || 'Unknown Student'}</span>
+              <div key={assignment._id} className='assigned-assignment-card'>
+                <div className="assignment-header">
+                  <div className="assignment-title-section">
+                    <div className="assignment-icon">
+                      <FileText className="icon" />
+                    </div>
+                    <div className="title-info">
+                      <h3>{assignment.title}</h3>
+                      <div className="student-info">
+                        <User className="user-icon" />
+                        <span>{assignment.studentId?.username || 'Unknown Student'}</span>
+                      </div>
                     </div>
                   </div>
+                  <div className="header-actions">
+                    <button
+                      className='view-button'
+                      onClick={() => handleViewClick(assignment._id)}
+                    >
+                      <Eye className="button-icon" />
+                      <span>VIEW</span>
+                    </button>
+                    <span className={`status-badge status-${assignment.status?.toLowerCase().replace(/\s+/g, '-') || 'pending'}`}>
+                      {assignment.status || 'Pending'}
+                    </span>
+                  </div>
                 </div>
-                <div className="header-actions">
-                  <button
-                    className='view-button'
-                    onClick={() => handleViewClick(assignment._id)}
-                  >
-                    <Eye className="button-icon" />
-                    <span>VIEW</span>
-                  </button>
-                  <span className={`status-badge status-${assignment.status?.toLowerCase().replace(/\s+/g, '-') || 'pending'}`}>
-                    {assignment.status || 'Pending'}
-                  </span>
+                <div className='assign-details'>
+                  <div className="detail-item description-item">
+                    <div className="detail-content">
+                      <FileText className="detail-icon" />
+                      <div>
+                        <h4>Description</h4>
+                        <p>{assignment.description || 'No description provided'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="detail-item due-date-item">
+                    <div className="detail-content">
+                      <Calendar className="detail-icon" />
+                      <div>
+                        <h4>Due Date</h4>
+                        <p>{new Date(assignment.dueDate).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="time-remaining">
+                      <Clock className="clock-icon" />
+                      <span>{calculateTimeRemaining(assignment.dueDate)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className='assign-details'>
-                <div className="detail-item description-item">
-                  <div className="detail-content">
-                    <FileText className="detail-icon" />
-                    <div>
-                      <h4>Description</h4>
-                      <p>{assignment.description || 'No description provided'}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="detail-item due-date-item">
-                  <div className="detail-content">
-                    <Calendar className="detail-icon" />
-                    <div>
-                      <h4>Due Date</h4>
-                      <p>{new Date(assignment.dueDate).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  <div className="time-remaining">
-                    <Clock className="clock-icon" />
-                    <span>{calculateTimeRemaining(assignment.dueDate)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
       )}
     </div>

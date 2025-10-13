@@ -34,6 +34,28 @@
     line-height: 1.2;
 }
 
+.filter-section {
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+}
+
+.filter-dropdown {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #4a5568;
+  background-color: white;
+  cursor: pointer;
+  min-width: 200px;
+  height: 36px; /* Fixed height */
+  margin: 0; /* Remove any margins */
+  align-self: center; /* Center itself */
+}
+
 /* Loading and error states */
 .loading-message,
 .error-message,
