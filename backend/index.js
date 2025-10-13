@@ -17,6 +17,8 @@ const multer = require("multer");
 const errorHandler = require("./middleware/errorHandler");
 const authMiddleware = require("./middleware/auth");
 
+const { initializeSocket } = require("./utils/socketManager");
+
 // Models
 const Assignment = require("./Models/Assignment");
 const Student = require("./Models/Student");
@@ -105,94 +107,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// Test route
-app.get("/test", (req, res) => {
-  res.json({ message: "Server is running" });
-});
-
-// Debug Routes (keep if useful in dev)
-app.get("/debug/collections", async (req, res) => {
-  try {
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    res.json(collections.map(col => col.name));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get("/debug/database", async (req, res) => {
-  try {
-    const dbStatus = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    const assignmentCount = await Assignment.countDocuments();
-    const sampleAssignment = await Assignment.findOne();
-
-    res.json({
-      status: dbStatus,
-      collections: collections.map(c => c.name),
-      assignmentCount,
-      sampleAssignment
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
-  }
-});
-
 // Socket.IO Setup
 const server = http.createServer(app);
-const { Server } = require("socket.io");
-
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:3000",
-    methods: ["GET", "POST"],
-  },
-});
-
-io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
-
-  socket.on("joinRoom", (assignmentId) => {
-    socket.join(assignmentId);
-    console.log(`Socket ${socket.id} joined room ${assignmentId}`);
-  });
-
-  socket.on("chatMessage", async (msg) => {
-    try {
-      const sanitizedText = sanitizeHtml(msg.text || "", {
-        allowedTags: [],
-        allowedAttributes: {}
-      }).trim();
-
-      if (!sanitizedText) return;
-
-      const newMessage = new ChatMessage({
-        assignmentId: msg.assignmentId,
-        senderId: msg.sender,
-        senderModel: msg.senderModel,
-        message: sanitizedText,
-      });
-
-      await newMessage.save();
-      await newMessage.populate("senderId", "name username");
-
-      io.to(msg.assignmentId).emit("message", {
-        assignmentId: msg.assignmentId,
-        sender: msg.sender,
-        senderName: msg.senderName,
-        text: sanitizedText,
-        timestamp: newMessage.createdAt,
-      });
-    } catch (error) {
-      console.error("Socket message error:", error);
-      socket.emit("error", { message: "Failed to send message" });
-    }
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
-});
+const io = initializeSocket(server);
 
 // Error Handler
 app.use(errorHandler);

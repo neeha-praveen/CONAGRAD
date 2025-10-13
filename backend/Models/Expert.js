@@ -44,4 +44,4 @@ const expertSchema = new mongoose.Schema({
       appearance: { type: String, default: 'light' },
     });
 
-module.exports = mongoose.model('experts', expertSchema); 
+module.exports = mongoose.model('Expert', expertSchema); 

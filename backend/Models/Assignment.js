@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const BidSchema = new mongoose.Schema({
     expertId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'experts',
+        ref: 'Expert', // ✅ FIXED
         required: true
     },
     amount: {
@@ -23,7 +23,7 @@ const BidSchema = new mongoose.Schema({
 const SubmissionSchema = new mongoose.Schema({
     expertId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'experts',
+        ref: 'Expert', // ✅ FIXED
         required: true
     },
     expertMessage: String,
@@ -55,19 +55,19 @@ const AssignmentSchema = new mongoose.Schema({
     fileSize: Number,
     status: {
         type: String,
-        enum: ['pending', 'completed', 'assigned','to be reviewed'],
+        enum: ['pending', 'completed', 'assigned', 'to be reviewed'],
         default: 'pending'
     },
     expertId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'experts'
+        ref: 'Expert' // ✅ FIXED
     },
     dueDate: Date,
     subject: String,
     studentName: String,
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
+        ref: 'Student', // ✅ CONFIRM this matches your Student model
         required: true
     },
     bids: [BidSchema],
